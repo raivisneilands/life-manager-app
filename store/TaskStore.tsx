@@ -1,8 +1,8 @@
-import { createAsyncStorage } from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { Task } from "../models/Task";
 
-const taskStorage = createAsyncStorage("life-manager-tasks");
+const STORAGE_KEY = "life-manager-tasks";
 
 type TaskStore = {
   tasks: Task[];
@@ -18,7 +18,7 @@ const today = new Date().toISOString().split("T")[0];
 export const useTaskStore = create<TaskStore>((set) => ({
   tasks: [],
   getTasks: async () => {
-    const storedTasks = await taskStorage.getItem("tasks");
+    const storedTasks = await AsyncStorage.getItem(STORAGE_KEY);
     if (storedTasks) {
       set({ tasks: JSON.parse(storedTasks) });
     }
@@ -26,16 +26,16 @@ export const useTaskStore = create<TaskStore>((set) => ({
   addTask: async (task: Task) => {
     set((state: any) => {
       const updatedTasks = [...state.tasks, task];
-      taskStorage.setItem("tasks", JSON.stringify(updatedTasks));
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTasks));
       return { tasks: updatedTasks };
     });
   },
   removeTask: async (taskId: string) => {
     set((state: any) => {
       const updatedTasks = state.tasks.filter(
-        (task: Task) => task.id !== taskId
+        (task: Task) => task.id !== taskId,
       );
-      taskStorage.setItem("tasks", JSON.stringify(updatedTasks));
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTasks));
       return { tasks: updatedTasks };
     });
   },
@@ -52,11 +52,11 @@ export const useTaskStore = create<TaskStore>((set) => ({
         }
         return task;
       });
-      taskStorage.setItem("tasks", JSON.stringify(updatedTasks));
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTasks));
       return { tasks: updatedTasks };
     });
   },
   saveTasksToStorage: async (tasks: Task[]) => {
-    await taskStorage.setItem("tasks", JSON.stringify(tasks));
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   },
 }));

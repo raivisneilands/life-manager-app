@@ -1,8 +1,8 @@
 import { HealthEntry } from "@/models/HealthEntry";
-import { createAsyncStorage } from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
-const healthStorage = createAsyncStorage("life-manager-health");
+const STORAGE_KEY = "life-manager-health";
 
 type HealthStore = {
   entries: HealthEntry[];
@@ -15,13 +15,13 @@ type HealthStore = {
 export const useHealthStore = create<HealthStore>((set) => ({
   entries: [],
   getEntries: async () => {
-    const stored = await healthStorage.getItem("entries");
+    const stored = await AsyncStorage.getItem(STORAGE_KEY);
     if (stored) set({ entries: JSON.parse(stored) });
   },
   addEntry: async (entry: HealthEntry) => {
     set((state: any) => {
       const updated = [...state.entries, entry];
-      healthStorage.setItem("entries", JSON.stringify(updated));
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return { entries: updated };
     });
   },
@@ -30,11 +30,11 @@ export const useHealthStore = create<HealthStore>((set) => ({
       const updated = state.entries.filter(
         (e: HealthEntry) => e.id !== entryId,
       );
-      healthStorage.setItem("entries", JSON.stringify(updated));
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return { entries: updated };
     });
   },
   saveEntriesToStorage: async (entries: HealthEntry[]) => {
-    await healthStorage.setItem("entries", JSON.stringify(entries));
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
   },
 }));

@@ -36,7 +36,7 @@ export default function EarlierTasksSection() {
 
   return (
     <Section>
-      <Title>Today's Tasks</Title>
+      <Title>Earlier Tasks</Title>
 
       {earlierTasks.map((task) => (
         <TaskItem key={task.id} completed={task.completed}>

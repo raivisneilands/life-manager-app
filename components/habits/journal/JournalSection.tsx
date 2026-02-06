@@ -1,17 +1,19 @@
-import Title from "@/components/Title";
-import { useJournalStore } from "@/store/JournalStore";
-import styled from "styled-components/native";
-import JournalComposer from "./JournalComposer";
-import JournalEntryItem from "./JournalEntryItem";
+import Title from '@/components/Title';
+import { useJournalStore } from '@/store/JournalStore';
+import styled from '@emotion/native';
+import JournalComposer from './JournalComposer';
+import JournalEntryItem from './JournalEntryItem';
 
-const Section = styled.View`
-  margin-top: 32px;
-  gap: 16px;
-`;
+// Section container for journal
+const Section = styled.View({
+  marginTop: 32,
+  gap: 16,
+});
 
-const EntryList = styled.View`
-  gap: 14px;
-`;
+// Container for the list of entries
+const EntryList = styled.View({
+  gap: 14,
+});
 
 export default function JournalSection() {
   const entries = useJournalStore((s) => s.entries);

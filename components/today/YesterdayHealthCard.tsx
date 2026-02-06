@@ -1,57 +1,59 @@
-import { useHealthStore } from "@/store/HealthStore";
-import formatDateTime from "@/utils/formatDateTime";
-import styled from "styled-components/native";
+import { useHealthStore } from '@/store/HealthStore';
+import formatDateTime from '@/utils/formatDateTime';
+import styled from '@emotion/native';
 
-const Card = styled.View`
-  background-color: #f0f8ff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 20px;
-  shadow-color: #000;
-  shadow-offset: 0px 2px;
-  shadow-opacity: 0.1;
-  shadow-radius: 4px;
-  elevation: 3;
-`;
+// ---------- styled ----------
+const Card = styled.View(({ theme }) => ({
+  backgroundColor: theme.surface,
+  borderRadius: 12,
+  padding: 16,
+  marginTop: 20,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 3,
+}));
 
-const Header = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  margin-bottom: 12px;
-`;
+const Header = styled.View({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 12,
+});
 
-const Title = styled.Text`
-  font-size: 16px;
-  font-weight: bold;
-  color: #005cbeff;
-`;
+const TitleText = styled.Text(({ theme }) => ({
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: theme.primary,
+}));
 
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  margin-bottom: 6px;
-`;
+const Row = styled.View({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 6,
+});
 
-const Label = styled.Text`
-  font-size: 14px;
-  color: #555;
-`;
+const Label = styled.Text(({ theme }) => ({
+  fontSize: 14,
+  color: theme.textSecondary,
+}));
 
-const Value = styled.Text`
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-`;
+const Value = styled.Text(({ theme }) => ({
+  fontSize: 14,
+  fontWeight: 'bold',
+  color: theme.textPrimary,
+}));
 
+// ---------- component ----------
 export default function YesterdayHealthCard() {
   const entries = useHealthStore((s) => s.entries);
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yDate = yesterday.toISOString().split("T")[0];
+  const yDate = yesterday.toISOString().split('T')[0];
 
   const entry = entries
-    .filter((e) => e.date.split("T")[0] === yDate)
+    .filter((e) => e.date.split('T')[0] === yDate)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
   if (!entry) return null;
@@ -59,8 +61,8 @@ export default function YesterdayHealthCard() {
   return (
     <Card>
       <Header>
-        <Title>Yesterday's Health</Title>
-        <Title>{formatDateTime(entry.date)}</Title>
+        <TitleText>Yesterday's Health</TitleText>
+        <TitleText>{formatDateTime(entry.date)}</TitleText>
       </Header>
 
       {entry.weight && (

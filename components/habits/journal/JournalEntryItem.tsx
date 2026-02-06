@@ -1,44 +1,51 @@
-import PrimaryButton from "@/components/PrimaryButton";
-import { JournalEntry } from "@/models/JournalEntry";
-import { useJournalStore } from "@/store/JournalStore";
-import formatDateTime from "@/utils/formatDateTime";
-import EvilIcons from "@expo/vector-icons/EvilIcons";
-import { useState } from "react";
-import styled from "styled-components/native";
+import PrimaryButton from '@/components/PrimaryButton';
+import { JournalEntry } from '@/models/JournalEntry';
+import { useJournalStore } from '@/store/JournalStore';
+import formatDateTime from '@/utils/formatDateTime';
+import styled from '@emotion/native';
+import EvilIcons from '@expo/vector-icons/EvilIcons';
+import { useState } from 'react';
 
-const Entry = styled.View`
-  background-color: #fafafa;
-  border-radius: 14px;
-  padding: 14px;
-  gap: 8px;
-`;
+// Theme-aware styled components
+const Entry = styled.View(({ theme }) => ({
+  backgroundColor: theme.surface,
+  borderRadius: 14,
+  padding: 14,
+  gap: 8,
+}));
 
-const Header = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
+const Header = styled.View({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+});
 
-const Meta = styled.Text`
-  font-size: 12px;
-  color: #888;
-`;
+const Meta = styled.Text(({ theme }) => ({
+  fontSize: 12,
+  color: theme.textSecondary,
+}));
 
-const Text = styled.Text`
-  font-size: 15px;
-  line-height: 20px;
-  color: #222;
-`;
+const EntryText = styled.Text(({ theme }) => ({
+  fontSize: 15,
+  lineHeight: 20,
+  color: theme.textPrimary,
+}));
 
-const Actions = styled.View`
-  flex-direction: row;
-  gap: 16px;
-`;
+const Actions = styled.View({
+  flexDirection: 'row',
+  gap: 16,
+});
 
-const EditInput = styled.TextInput`
-  min-height: 80px;
-  font-size: 15px;
-`;
+const EditInput = styled.TextInput(({ theme }) => ({
+  minHeight: 80,
+  fontSize: 15,
+  color: theme.textPrimary,
+  backgroundColor: theme.surface,
+  borderRadius: 12,
+  padding: 8,
+}));
+
+const Icon = styled(EvilIcons)<{ color?: string }>``;
 
 interface JournalEntryItemProps {
   entry: JournalEntry;
@@ -58,16 +65,16 @@ export default function JournalEntryItem({ entry }: JournalEntryItemProps) {
 
         {!editing && (
           <Actions>
-            <EvilIcons
+            <Icon
               name="pencil"
               size={22}
-              color="#666"
+              color="#888" // optional: could use theme.textSecondary
               onPress={() => setEditing(true)}
             />
-            <EvilIcons
+            <Icon
               name="trash"
               size={22}
-              color="#c00"
+              color="#DC2626" // optional: theme.danger
               onPress={() => remove(entry.id)}
             />
           </Actions>
@@ -94,7 +101,7 @@ export default function JournalEntryItem({ entry }: JournalEntryItemProps) {
           </Actions>
         </>
       ) : (
-        <Text>{entry.content}</Text>
+        <EntryText>{entry.content}</EntryText>
       )}
     </Entry>
   );

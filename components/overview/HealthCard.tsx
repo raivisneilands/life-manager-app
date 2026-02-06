@@ -1,13 +1,13 @@
-import { HealthEntry } from "@/models/HealthEntry";
-import React from "react";
-import styled from "styled-components/native";
-import SectionCard from "./SectionCard";
+import { HealthEntry } from '@/models/HealthEntry';
+import styled from '@emotion/native';
+import SectionCard from './SectionCard';
 
-const CardGrid = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-`;
+const CardGrid = styled.View({
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'space-between',
+  gap: 12, // optional spacing between cards
+});
 
 interface HealthCardProps {
   entry?: HealthEntry;

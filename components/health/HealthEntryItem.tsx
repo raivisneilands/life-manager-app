@@ -1,33 +1,39 @@
-import { HealthEntry } from "@/models/HealthEntry";
-import formatDateTime from "@/utils/formatDateTime";
-import { EvilIcons } from "@expo/vector-icons";
-import { useState } from "react";
-import styled from "styled-components/native";
+import { HealthEntry } from '@/models/HealthEntry';
+import formatDateTime from '@/utils/formatDateTime';
+import styled from '@emotion/native';
+import { EvilIcons } from '@expo/vector-icons';
+import { useState } from 'react';
 
-const EntryCard = styled.TouchableOpacity<{ expanded?: boolean }>`
-  background-color: #f0f4ff;
-  padding: 15px;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  border: 1px solid #cfd8ff;
-`;
+// Theme-aware card for each health entry
+const EntryCard = styled.TouchableOpacity<{ expanded?: boolean }>(
+  ({ theme }) => ({
+    backgroundColor: theme.surface,
+    padding: 15,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+  }),
+);
 
-const EntryRow = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  margin-bottom: 6px;
-`;
+const EntryRow = styled.View({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 6,
+});
 
-const EntryLabel = styled.Text`
-  font-weight: bold;
-  color: #333;
-  margin-right: 10px;
-`;
+const EntryLabel = styled.Text(({ theme }) => ({
+  fontWeight: 'bold',
+  color: theme.textPrimary,
+  marginRight: 10,
+}));
 
-const EntryValue = styled.Text`
-  color: #555;
-  text-align: right;
-`;
+const EntryValue = styled.Text(({ theme }) => ({
+  color: theme.textSecondary,
+  textAlign: 'right',
+}));
+
+const TrashIcon = styled(EvilIcons)<{ color?: string }>({});
 
 interface Props {
   entry: HealthEntry;
@@ -83,10 +89,10 @@ export default function HealthEntryItem({ entry, onDelete }: Props) {
             </EntryRow>
           )}
           <EntryRow>
-            <EvilIcons
+            <TrashIcon
               name="trash"
               size={24}
-              color="red"
+              color="#DC2626" // optional: theme.danger
               onPress={() => onDelete(entry.id)}
             />
           </EntryRow>

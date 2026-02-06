@@ -1,17 +1,7 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ["babel-preset-expo"],
-    plugins: [
-      "babel-plugin-styled-components",
-      [
-        "module-resolver",
-        {
-          alias: {
-            tslib: "./tslib-shim.js",
-          },
-        },
-      ],
-    ],
+    presets: ['babel-preset-expo'],
+    plugins: [['module-resolver']],
   };
 };

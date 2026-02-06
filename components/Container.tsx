@@ -1,11 +1,16 @@
-import styled from "styled-components/native";
+import styled from '@emotion/native';
+import { ReactNode } from 'react';
 
-const AppContainer = styled.View`
-  display: flex;
-  padding: 40px 20px;
-  flex: 1;
-`;
+type ContainerProps = {
+  children: ReactNode;
+};
 
-export default function Container({ children }) {
+const AppContainer = styled.View(({ theme }) => ({
+  flex: 1,
+  backgroundColor: theme.background,
+  padding: 15,
+}));
+
+export default function Container({ children }: ContainerProps) {
   return <AppContainer>{children}</AppContainer>;
 }

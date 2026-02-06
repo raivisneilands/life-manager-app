@@ -1,26 +1,26 @@
-import React from "react";
-import styled from "styled-components/native";
+import styled from '@emotion/native';
+import React from 'react';
 
-const Card = styled.View`
-  width: 48%;
-  background-color: #f5f5f5;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  elevation: 2;
-`;
+const Card = styled.View(({ theme }) => ({
+  width: '48%',
+  backgroundColor: theme.card,
+  padding: 15,
+  borderRadius: 12,
+  marginBottom: 12,
+  elevation: 2,
+}));
 
-const CardLabel = styled.Text`
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 5px;
-`;
+const CardLabel = styled.Text(({ theme }) => ({
+  fontSize: 14,
+  color: theme.textSecondary,
+  marginBottom: 5,
+}));
 
-const CardValue = styled.Text`
-  font-size: 20px;
-  font-weight: bold;
-  color: #005cbeff;
-`;
+const CardValue = styled.Text(({ theme }) => ({
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: theme.primary,
+}));
 
 interface SectionCardProps {
   label: string;

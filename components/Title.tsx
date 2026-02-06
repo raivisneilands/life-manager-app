@@ -1,11 +1,17 @@
-import styled from "styled-components";
+import styled from '@emotion/native';
+import { ReactNode } from 'react';
 
-const StyledTitle = styled.h1`
-  font-size: 20px;
-  font-weight: bold;
-  color: #005cbeff;
-`;
+type TitleProps = {
+  children: ReactNode;
+};
 
-export default function Title({ children }) {
+const StyledTitle = styled.Text(({ theme }) => ({
+  fontSize: 24,
+  fontWeight: 'bold',
+  color: theme.textPrimary,
+  marginBottom: 16,
+}));
+
+export default function Title({ children }: TitleProps) {
   return <StyledTitle>{children}</StyledTitle>;
 }

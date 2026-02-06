@@ -1,12 +1,12 @@
-import React from "react";
-import styled from "styled-components/native";
-import SectionCard from "./SectionCard";
+import styled from '@emotion/native';
+import SectionCard from './SectionCard';
 
-const CardGrid = styled.View`
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-`;
+const CardGrid = styled.View({
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'space-between',
+  gap: 12, // optional: spacing between cards
+});
 
 interface FinanceSummaryProps {
   totalIncome: number;
@@ -21,9 +21,9 @@ export default function FinanceSummary({
 }: FinanceSummaryProps) {
   return (
     <CardGrid>
-      <SectionCard label="Total Income" value={totalIncome + " €"} />
-      <SectionCard label="Total Expenses" value={totalExpense + " €"} />
-      <SectionCard label="Net Balance" value={netBalance + " €"} />
+      <SectionCard label="Total Income" value={`${totalIncome} €`} />
+      <SectionCard label="Total Expenses" value={`${totalExpense} €`} />
+      <SectionCard label="Net Balance" value={`${netBalance} €`} />
     </CardGrid>
   );
 }

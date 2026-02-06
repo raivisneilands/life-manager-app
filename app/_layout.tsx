@@ -1,9 +1,13 @@
-import { useFinanceStore } from "@/store/FinanceStore";
-import { useHabitStore } from "@/store/HabitStore";
-import { useHealthStore } from "@/store/HealthStore";
-import { useTaskStore } from "@/store/TaskStore";
-import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { useFinanceStore } from '@/store/FinanceStore';
+import { useHabitStore } from '@/store/HabitStore';
+import { useHealthStore } from '@/store/HealthStore';
+import { useTaskStore } from '@/store/TaskStore';
+import { darkTheme, lightTheme } from '@/theme';
+import { ThemeProvider } from '@emotion/react';
+import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { useColorScheme } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
   const getHabits = useHabitStore((s) => s.getHabits);
@@ -22,9 +26,17 @@ export default function RootLayout() {
     init();
   }, []);
 
+  const scheme = useColorScheme();
+
+  const theme = scheme === 'dark' ? darkTheme : lightTheme;
+
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-    </Stack>
+    <ThemeProvider theme={theme}>
+      <SafeAreaProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }

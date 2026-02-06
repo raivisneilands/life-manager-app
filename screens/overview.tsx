@@ -1,26 +1,30 @@
-import Container from "@/components/Container";
-import FinanceSummary from "@/components/overview/FinanceSummary";
-import HealthCard from "@/components/overview/HealthCard";
-import SectionCard from "@/components/overview/SectionCard";
-import StreakCard from "@/components/overview/StreakCard";
-import Title from "@/components/Title";
-import { useFinanceStore } from "@/store/FinanceStore";
-import { useHabitStore } from "@/store/HabitStore";
-import { useHealthStore } from "@/store/HealthStore";
-import { useTaskStore } from "@/store/TaskStore";
-import { ScrollView, Text } from "react-native";
-import styled from "styled-components/native";
+import Container from '@/components/Container';
+import FinanceSummary from '@/components/overview/FinanceSummary';
+import HealthCard from '@/components/overview/HealthCard';
+import SectionCard from '@/components/overview/SectionCard';
+import StreakCard from '@/components/overview/StreakCard';
+import Title from '@/components/Title';
+import { useFinanceStore } from '@/store/FinanceStore';
+import { useHabitStore } from '@/store/HabitStore';
+import { useHealthStore } from '@/store/HealthStore';
+import { useTaskStore } from '@/store/TaskStore';
+import styled from '@emotion/native';
+import { ScrollView } from 'react-native';
+
+/* =========================
+   STYLED COMPONENTS
+========================= */
 
 const Section = styled.View`
   margin-top: 20px;
 `;
 
-const SectionTitle = styled.Text`
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
-`;
+const SectionTitle = styled.Text(({ theme }) => ({
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: theme.textPrimary,
+  marginBottom: 10,
+}));
 
 const CardGrid = styled.View`
   flex-direction: row;
@@ -28,45 +32,53 @@ const CardGrid = styled.View`
   justify-content: space-between;
 `;
 
-const StreakScroll = styled.ScrollView.attrs({
-  horizontal: true,
-  showsHorizontalScrollIndicator: false,
-})`
+const StreakScroll = styled.ScrollView`
   margin-top: 10px;
 `;
 
+const StyledText = styled.Text(({ theme }) => ({
+  color: theme.textSecondary,
+}));
+
+/* =========================
+   COMPONENT
+========================= */
+
 export default function OverviewPage() {
-  const tasks = useTaskStore((state) => state.tasks);
-  const habits = useHabitStore((state) => state.habits);
-  const healthEntries = useHealthStore((state) => state.entries);
-  const financeEntries = useFinanceStore((state) => state.entries);
+  const tasks = useTaskStore((s) => s.tasks);
+  const habits = useHabitStore((s) => s.habits);
+  const healthEntries = useHealthStore((s) => s.entries);
+  const financeEntries = useFinanceStore((s) => s.entries);
 
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
-  const todayTasks = tasks.filter((t) => t.date.split("T")[0] === today);
+  const todayTasks = tasks.filter((t) => t.date.split('T')[0] === today);
   const todayCompletedTasks = todayTasks.filter((t) => t.completed);
 
   const completedHabits = habits.filter((h) => h.lastCompletedDate === today);
 
   const yesterdayHealth = healthEntries
-    .filter((h) => h.date.split("T")[0] === yesterday)
+    .filter((h) => h.date.split('T')[0] === yesterday)
     .pop();
 
   const yesterdayFinance = financeEntries.filter(
-    (f) => f.date.split("T")[0] === yesterday,
+    (f) => f.date.split('T')[0] === yesterday,
   );
   const totalIncome = yesterdayFinance
-    .filter((f) => f.type === "income")
+    .filter((f) => f.type === 'income')
     .reduce((acc, f) => acc + f.amount, 0);
   const totalExpense = yesterdayFinance
-    .filter((f) => f.type === "expense")
+    .filter((f) => f.type === 'expense')
     .reduce((acc, f) => acc + f.amount, 0);
   const netBalance = totalIncome - totalExpense;
 
   return (
     <Container>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         <Title>Overview</Title>
 
         {/* Tasks Section */}
@@ -80,7 +92,7 @@ export default function OverviewPage() {
             {todayCompletedTasks.length > 0 && (
               <SectionCard label="Tasks Done">
                 {todayCompletedTasks.map((t) => (
-                  <Text key={t.id}>- {t.title}</Text>
+                  <StyledText key={t.id}>- {t.title}</StyledText>
                 ))}
               </SectionCard>
             )}
@@ -97,7 +109,7 @@ export default function OverviewPage() {
             />
           </CardGrid>
 
-          <StreakScroll>
+          <StreakScroll horizontal contentContainerStyle={{ paddingRight: 10 }}>
             {habits.map((h) => (
               <StreakCard key={h.id} streak={h.streak} title={h.title} />
             ))}

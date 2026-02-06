@@ -1,18 +1,31 @@
-import styled from "styled-components/native";
+import styled from '@emotion/native';
+import { ReactNode } from 'react';
 
-const StyledButton = styled.TouchableOpacity`
-  background-color: #005cbeff;
-  padding: 10px 15px;
-  border-radius: 5px;
-`;
+type PrimaryButtonProps = {
+  children: ReactNode;
+  onPress: () => void;
+};
 
-const StyledButtonText = styled.Text`
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
-`;
+// ---------- styled ----------
+const StyledButton = styled.TouchableOpacity(({ theme }) => ({
+  backgroundColor: theme.primary,
+  paddingVertical: 10,
+  paddingHorizontal: 15,
+  borderRadius: 5,
+  alignItems: 'center',
+}));
 
-export default function PrimaryButton({ children, onPress }) {
+const StyledButtonText = styled.Text(({ theme }) => ({
+  color: '#ffffff', // or theme.surface if you prefer contrast
+  fontSize: 14,
+  fontWeight: 'bold',
+}));
+
+// ---------- component ----------
+export default function PrimaryButton({
+  children,
+  onPress,
+}: PrimaryButtonProps) {
   return (
     <StyledButton onPress={onPress}>
       <StyledButtonText>{children}</StyledButtonText>

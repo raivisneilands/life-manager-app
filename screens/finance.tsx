@@ -1,155 +1,166 @@
-import Container from "@/components/Container";
-import Title from "@/components/Title";
-import { FinanceEntry } from "@/models/FinanceEntry";
-import { useFinanceStore } from "@/store/FinanceStore";
-import { EvilIcons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import Container from '@/components/Container';
+import Title from '@/components/Title';
+import { FinanceEntry } from '@/models/FinanceEntry';
+import { useFinanceStore } from '@/store/FinanceStore';
+import styled from '@emotion/native';
+import { EvilIcons } from '@expo/vector-icons';
+import * as Crypto from 'expo-crypto';
+import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
-  Text,
-} from "react-native";
-import styled from "styled-components/native";
-import { v4 as uuidv4 } from "uuid";
+} from 'react-native';
 
 // ---------- styled ----------
-const Card = styled.View`
-  background-color: #f5f7ff;
-  padding: 16px;
-  border-radius: 14px;
-  margin-bottom: 20px;
-  border: 1px solid #dbe2ff;
-`;
+const Card = styled.View(({ theme }) => ({
+  backgroundColor: theme.card,
+  padding: 16,
+  borderRadius: 14,
+  marginBottom: 20,
+  borderWidth: 1,
+  borderColor: theme.border,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 3,
+}));
 
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  margin-bottom: 6px;
-`;
+const Row = styled.View({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 6,
+});
 
-const Label = styled.Text`
-  font-weight: bold;
-  color: #333;
-`;
+const Label = styled.Text(({ theme }) => ({
+  fontWeight: 'bold',
+  color: theme.textPrimary,
+}));
 
-const Value = styled.Text<{ positive?: boolean }>`
-  color: ${({ positive }) => (positive ? "#2e7d32" : "#c62828")};
-  font-weight: bold;
-`;
+const Value = styled.Text<{ positive?: boolean }>(({ positive, theme }) => ({
+  color: positive ? theme.success : theme.danger,
+  fontWeight: 'bold',
+}));
 
-const FormRow = styled.View`
-  margin-bottom: 12px;
-`;
+const FormRow = styled.View({ marginBottom: 12 });
 
-const Input = styled.TextInput`
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 10px;
-`;
+const Input = styled.TextInput(({ theme }) => ({
+  borderWidth: 1,
+  borderColor: theme.border,
+  borderRadius: 10,
+  padding: 10,
+  color: theme.textPrimary,
+  backgroundColor: theme.surface,
+}));
 
-const TypeSwitch = styled.View`
-  flex-direction: row;
-  margin-bottom: 12px;
-`;
+const TypeSwitch = styled.View({ flexDirection: 'row', marginBottom: 12 });
 
-const TypeButton = styled.TouchableOpacity<{ active?: boolean }>`
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  background-color: ${({ active }) => (active ? "#005cbeff" : "#eee")};
-  margin-right: 8px;
-`;
+const TypeButton = styled.TouchableOpacity<{ active?: boolean }>(
+  ({ active, theme }) => ({
+    flex: 1,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: active ? theme.primary : theme.border,
+    marginRight: 8,
+  }),
+);
 
-const TypeText = styled.Text<{ active?: boolean }>`
-  text-align: center;
-  font-weight: bold;
-  color: ${({ active }) => (active ? "#fff" : "#555")};
-`;
+const TypeText = styled.Text<{ active?: boolean }>(({ active, theme }) => ({
+  textAlign: 'center',
+  fontWeight: 'bold',
+  color: active ? '#ffffff' : theme.textSecondary,
+}));
 
-const AddButton = styled.TouchableOpacity`
-  background-color: #005cbeff;
-  padding: 14px;
-  border-radius: 12px;
-  align-items: center;
-  margin-top: 10px;
-`;
+const AddButton = styled.TouchableOpacity(({ theme }) => ({
+  backgroundColor: theme.primary,
+  padding: 14,
+  borderRadius: 12,
+  alignItems: 'center',
+  marginTop: 10,
+}));
 
-const AddButtonText = styled.Text`
-  color: #fff;
-  font-weight: bold;
-`;
+const AddButtonText = styled.Text(({ theme }) => ({
+  color: '#ffffff',
+  fontWeight: 'bold',
+}));
 
-const EntryCard = styled.TouchableOpacity`
-  background-color: #fff;
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 12px;
-  border: 1px solid #eee;
-`;
+const EntryCard = styled.TouchableOpacity(({ theme }) => ({
+  backgroundColor: theme.card,
+  borderRadius: 14,
+  padding: 14,
+  marginBottom: 12,
+  borderWidth: 1,
+  borderColor: theme.border,
+}));
 
-const EntryTitle = styled.Text`
-  font-weight: bold;
-  color: #333;
-`;
+const EntryTitle = styled.Text(({ theme }) => ({
+  fontWeight: 'bold',
+  color: theme.textPrimary,
+}));
 
-const EntryMeta = styled.Text`
-  color: #777;
-  font-size: 12px;
-`;
+const EntryMeta = styled.Text(({ theme }) => ({
+  color: theme.textSecondary,
+  fontSize: 12,
+}));
 
-const ModalContainer = styled.View`
-  flex: 1;
-  background-color: rgba(0, 0, 0, 0.5);
-  justify-content: center;
-  align-items: center;
-`;
+const ModalContainer = styled.View({
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+});
 
-const ModalContent = styled.View`
-  width: 90%;
-  background-color: #fff;
-  border-radius: 16px;
-  padding: 20px;
-`;
+const ModalContent = styled.View(({ theme }) => ({
+  width: '90%',
+  backgroundColor: theme.card,
+  borderRadius: 16,
+  padding: 20,
+}));
 
-const CloseButton = styled.TouchableOpacity`
-  align-self: flex-end;
-  margin-bottom: 10px;
-`;
+const CloseButton = styled.TouchableOpacity({
+  alignSelf: 'flex-end',
+  marginBottom: 10,
+});
 
-const MonthButton = styled.TouchableOpacity`
-  padding: 10px 16px;
-  background-color: #005cbeff;
-  border-radius: 10px;
-  margin-bottom: 12px;
-  align-items: center;
-`;
+const MonthButton = styled.TouchableOpacity(({ theme }) => ({
+  padding: 10,
+  backgroundColor: theme.primary,
+  borderRadius: 10,
+  marginBottom: 12,
+  alignItems: 'center',
+}));
 
-const MonthButtonText = styled.Text`
-  color: #fff;
-  font-weight: bold;
-`;
+const MonthButtonText = styled.Text({
+  color: '#ffffff',
+  fontWeight: 'bold',
+});
 
-// ---------- Month Navigation Header ----------
-const MonthNav = styled.View`
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-`;
+const MonthNav = styled.View({
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 12,
+});
 
-const MonthNavButton = styled.TouchableOpacity`
-  padding: 6px 12px;
-  background-color: #005cbeff;
-  border-radius: 8px;
-`;
+const MonthNavButton = styled.TouchableOpacity(({ theme }) => ({
+  padding: 6,
+  backgroundColor: theme.primary,
+  borderRadius: 8,
+}));
 
-const MonthNavText = styled.Text`
-  color: #fff;
-  font-weight: bold;
-  font-size: 14px;
-`;
+const MonthNavText = styled.Text(({ theme }) => ({
+  color: '#ffffff',
+  fontWeight: 'bold',
+  fontSize: 14,
+}));
+
+const StyledText = styled.Text(({ theme }) => ({
+  color: theme.textPrimary,
+  fontWeight: 'bold',
+  fontSize: 14,
+}));
 
 // ---------- component ----------
 export default function FinancePage() {
@@ -158,13 +169,12 @@ export default function FinancePage() {
   const addEntry = useFinanceStore((s) => s.addEntry);
   const removeEntry = useFinanceStore((s) => s.removeEntry);
 
-  const [amount, setAmount] = useState("");
-  const [type, setType] = useState<"income" | "expense">("expense");
-  const [category, setCategory] = useState("");
-  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState('');
+  const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Monthly modal
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
 
@@ -172,15 +182,12 @@ export default function FinancePage() {
     getEntries();
   }, []);
 
-  // Summary totals
   const totalIncome = entries
-    .filter((e) => e.type === "income")
+    .filter((e) => e.type === 'income')
     .reduce((sum, e) => sum + e.amount, 0);
-
   const totalExpense = entries
-    .filter((e) => e.type === "expense")
+    .filter((e) => e.type === 'expense')
     .reduce((sum, e) => sum + e.amount, 0);
-
   const balance = totalIncome - totalExpense;
 
   const sortedEntries = [...entries].sort(
@@ -191,21 +198,20 @@ export default function FinancePage() {
     if (!amount || !category) return;
 
     const entry: FinanceEntry = {
-      id: uuidv4(),
+      id: Crypto.randomUUID(),
       amount: parseFloat(amount),
       type,
       category,
       description: description || undefined,
-      date: new Date().toISOString().split("T")[0],
+      date: new Date().toISOString().split('T')[0],
     };
 
     addEntry(entry);
-    setAmount("");
-    setCategory("");
-    setDescription("");
+    setAmount('');
+    setCategory('');
+    setDescription('');
   };
 
-  // Monthly entries
   const monthEntries = entries.filter((e) => {
     const d = new Date(e.date);
     return (
@@ -215,21 +221,19 @@ export default function FinancePage() {
   });
 
   const monthIncome = monthEntries
-    .filter((e) => e.type === "income")
+    .filter((e) => e.type === 'income')
     .reduce((sum, e) => sum + e.amount, 0);
-
   const monthExpense = monthEntries
-    .filter((e) => e.type === "expense")
+    .filter((e) => e.type === 'expense')
     .reduce((sum, e) => sum + e.amount, 0);
-
   const monthBalance = monthIncome - monthExpense;
 
   const formatMonth = (date: Date) =>
-    date.toLocaleString("default", { month: "long", year: "numeric" });
+    date.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={{ flex: 1 }}
     >
       <Container>
@@ -260,25 +264,25 @@ export default function FinancePage() {
 
         <ScrollView>
           {/* Add Entry */}
-
           <Card>
             <TypeSwitch>
               <TypeButton
-                active={type === "expense"}
-                onPress={() => setType("expense")}
+                active={type === 'expense'}
+                onPress={() => setType('expense')}
               >
-                <TypeText active={type === "expense"}>Expense</TypeText>
+                <TypeText active={type === 'expense'}>Expense</TypeText>
               </TypeButton>
               <TypeButton
-                active={type === "income"}
-                onPress={() => setType("income")}
+                active={type === 'income'}
+                onPress={() => setType('income')}
               >
-                <TypeText active={type === "income"}>Income</TypeText>
+                <TypeText active={type === 'income'}>Income</TypeText>
               </TypeButton>
             </TypeSwitch>
 
             <FormRow>
               <Input
+                placeholderTextColor="#999"
                 placeholder="Amount"
                 keyboardType="numeric"
                 value={amount}
@@ -288,6 +292,7 @@ export default function FinancePage() {
 
             <FormRow>
               <Input
+                placeholderTextColor="#999"
                 placeholder="Category"
                 value={category}
                 onChangeText={setCategory}
@@ -296,6 +301,7 @@ export default function FinancePage() {
 
             <FormRow>
               <Input
+                placeholderTextColor="#999"
                 placeholder="Description (optional)"
                 value={description}
                 onChangeText={setDescription}
@@ -310,7 +316,6 @@ export default function FinancePage() {
           {/* Entries */}
           {sortedEntries.map((entry) => {
             const expanded = expandedId === entry.id;
-
             return (
               <EntryCard
                 key={entry.id}
@@ -318,8 +323,8 @@ export default function FinancePage() {
               >
                 <Row>
                   <EntryTitle>{entry.category}</EntryTitle>
-                  <Value positive={entry.type === "income"}>
-                    {entry.type === "income" ? "+" : "-"}€{entry.amount}
+                  <Value positive={entry.type === 'income'}>
+                    {entry.type === 'income' ? '+' : '-'}€{entry.amount}
                   </Value>
                 </Row>
                 <EntryMeta>{entry.date}</EntryMeta>
@@ -347,7 +352,9 @@ export default function FinancePage() {
           <ModalContainer>
             <ModalContent>
               <CloseButton onPress={() => setModalVisible(false)}>
-                <Text style={{ fontWeight: "bold", fontSize: 16 }}>Close</Text>
+                <StyledText style={{ fontWeight: 'bold', fontSize: 16 }}>
+                  Close
+                </StyledText>
               </CloseButton>
 
               <MonthNav>
@@ -365,9 +372,14 @@ export default function FinancePage() {
                   <MonthNavText>◀ Prev</MonthNavText>
                 </MonthNavButton>
 
-                <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                <StyledText
+                  style={{
+                    fontWeight: 'bold',
+                    fontSize: 16,
+                  }}
+                >
                   {formatMonth(selectedMonth)}
-                </Text>
+                </StyledText>
 
                 <MonthNavButton
                   onPress={() =>
@@ -404,8 +416,8 @@ export default function FinancePage() {
                   <EntryCard key={entry.id}>
                     <Row>
                       <EntryTitle>{entry.category}</EntryTitle>
-                      <Value positive={entry.type === "income"}>
-                        {entry.type === "income" ? "+" : "-"}€{entry.amount}
+                      <Value positive={entry.type === 'income'}>
+                        {entry.type === 'income' ? '+' : '-'}€{entry.amount}
                       </Value>
                     </Row>
                     <EntryMeta>{entry.date}</EntryMeta>

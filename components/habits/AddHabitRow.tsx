@@ -6,21 +6,21 @@ import * as Crypto from 'expo-crypto';
 import { useState } from 'react';
 
 // Row container
-const Row = styled.View({
+const Row = styled.View(({ theme }) => ({
   flexDirection: 'row',
-  gap: 12,
-});
+  alignItems: 'center',
+  marginBottom: 20,
+}));
 
-// Theme-aware input
 const Input = styled.TextInput(({ theme }) => ({
   flex: 1,
   borderWidth: 1,
-  borderColor: theme.border, // theme-aware border
-  borderRadius: 12,
-  padding: 12,
-  fontSize: 15,
-  color: theme.textPrimary, // theme-aware text
-  backgroundColor: theme.surface, // optional: input background matches card
+  borderColor: theme.border,
+  borderRadius: 8,
+  padding: 10,
+  marginRight: 12,
+  backgroundColor: theme.surface,
+  color: theme.textPrimary,
 }));
 
 export default function AddHabitRow() {

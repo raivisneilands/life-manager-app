@@ -42,7 +42,8 @@ const EditInput = styled.TextInput(({ theme }) => ({
   color: theme.textPrimary,
   backgroundColor: theme.surface,
   borderRadius: 12,
-  padding: 8,
+  textAlignVertical: 'top',
+  paddingTop: 0,
 }));
 
 const Icon = styled(EvilIcons)<{ color?: string }>``;

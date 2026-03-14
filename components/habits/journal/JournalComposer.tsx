@@ -20,6 +20,8 @@ const Input = styled.TextInput(({ theme }) => ({
   fontSize: 15,
   lineHeight: 20,
   color: theme.textPrimary, // theme-aware
+  textAlignVertical: 'top',
+  paddingTop: 0,
 }));
 
 export default function JournalComposer() {

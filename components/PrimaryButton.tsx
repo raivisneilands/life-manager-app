@@ -11,8 +11,9 @@ const StyledButton = styled.TouchableOpacity(({ theme }) => ({
   backgroundColor: theme.primary,
   paddingVertical: 10,
   paddingHorizontal: 15,
-  borderRadius: 5,
+  borderRadius: 12,
   alignItems: 'center',
+  justifyContent: 'center',
 }));
 
 const StyledButtonText = styled.Text(({ theme }) => ({

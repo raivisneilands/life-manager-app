@@ -7,7 +7,7 @@ import { ThemeProvider } from '@emotion/react';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
   const getHabits = useHabitStore((s) => s.getHabits);
@@ -33,9 +33,11 @@ export default function RootLayout() {
   return (
     <ThemeProvider theme={theme}>
       <SafeAreaProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-        </Stack>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+          </Stack>
+        </SafeAreaView>
       </SafeAreaProvider>
     </ThemeProvider>
   );

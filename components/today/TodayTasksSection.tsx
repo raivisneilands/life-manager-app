@@ -46,7 +46,7 @@ export default function TodayTasksSection() {
   if (!todayTasks.length) return null;
 
   return (
-    <Section>
+    <>
       <Title>Today's Tasks</Title>
 
       {todayTasks.map((task) => (
@@ -68,6 +68,6 @@ export default function TodayTasksSection() {
           </Actions>
         </TaskItem>
       ))}
-    </Section>
+    </>
   );
 }

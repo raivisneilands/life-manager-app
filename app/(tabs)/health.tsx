@@ -1,4 +1,4 @@
-import HealthPage from '@/screens/habits';
+import HealthPage from '@/screens/health';
 import { useTheme } from '@emotion/react';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 

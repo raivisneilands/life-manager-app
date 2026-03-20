@@ -3,13 +3,6 @@ import { useTaskStore } from '@/store/TaskStore';
 import styled from '@emotion/native';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 
-const Section = styled.View(({ theme }) => ({
-  backgroundColor: theme.surface,
-  padding: 12,
-  borderRadius: 12,
-  marginBottom: 20,
-}));
-
 const TaskItem = styled.View<{ completed?: boolean }>(
   ({ theme, completed }) => ({
     flexDirection: 'row',
@@ -46,7 +39,7 @@ export default function EarlierTasksSection() {
   if (!earlierTasks.length) return null;
 
   return (
-    <Section>
+    <>
       <Title>Earlier Tasks</Title>
 
       {earlierTasks.map((task) => (
@@ -68,6 +61,6 @@ export default function EarlierTasksSection() {
           </Actions>
         </TaskItem>
       ))}
-    </Section>
+    </>
   );
 }

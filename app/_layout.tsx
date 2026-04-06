@@ -1,3 +1,4 @@
+import Menu from '@/components/Menu';
 import { useFinanceStore } from '@/store/FinanceStore';
 import { useHabitStore } from '@/store/HabitStore';
 import { useHealthStore } from '@/store/HealthStore';
@@ -34,6 +35,7 @@ export default function RootLayout() {
     <ThemeProvider theme={theme}>
       <SafeAreaProvider>
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+          <Menu/>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
           </Stack>

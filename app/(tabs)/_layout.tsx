@@ -74,6 +74,30 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="relationships"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="fitness"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="goals"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

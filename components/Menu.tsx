@@ -1,11 +1,13 @@
 import styled from '@emotion/native';
+import { Link } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Animated, Dimensions, Modal } from 'react-native';
 
 const DRAWER_WIDTH = Dimensions.get('window').width * 0.55;
 
 const HamburgerButton = styled.TouchableOpacity`
-  padding: 12px 16px;
+  padding-left: 16px;
+  padding-top: 5px;
 `;
 
 const HamburgerText = styled.Text(({theme}) => ({
@@ -68,6 +70,7 @@ export default function Menu() {
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
 
+
   function openDrawer() {
     setVisible(true);
     Animated.parallel([
@@ -116,12 +119,16 @@ export default function Menu() {
         <MenuLink
             key={link.key}
             activeOpacity={0.6}
-            onPress={() => {
-            closeDrawer();
-            console.log(`Navigate to: ${link.key}`);
-            }}
         >
+            <Link
+              href={`/${link.key}` as any}
+              onPress={() => {
+                closeDrawer();
+                console.log(`Navigate to: ${link.key}`);
+              }}
+            >
             <MenuLinkText>{link.label}</MenuLinkText>
+            </Link>
         </MenuLink>
         ))}
     </Drawer>

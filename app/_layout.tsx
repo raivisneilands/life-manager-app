@@ -2,6 +2,7 @@ import Menu from '@/components/Menu';
 import { useFinanceStore } from '@/store/FinanceStore';
 import { useHabitStore } from '@/store/HabitStore';
 import { useHealthStore } from '@/store/HealthStore';
+import { useRelationshipStore } from '@/store/RelationshipStore';
 import { useTaskStore } from '@/store/TaskStore';
 import { darkTheme, lightTheme } from '@/theme';
 import { ThemeProvider } from '@emotion/react';
@@ -15,12 +16,14 @@ export default function RootLayout() {
   const getHealthEntries = useHealthStore((s) => s.getEntries);
   const getFinanceEntries = useFinanceStore((s) => s.getEntries);
   const getTasks = useTaskStore((s) => s.getTasks);
+  const getRelationships = useRelationshipStore((s) => s.getRelationships);
 
   async function init() {
     await getTasks();
     await getHabits();
     await getHealthEntries();
     await getFinanceEntries();
+    await getRelationships();
   }
 
   useEffect(() => {

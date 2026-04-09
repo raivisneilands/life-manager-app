@@ -1,5 +1,6 @@
 import Menu from '@/components/Menu';
 import { useFinanceStore } from '@/store/FinanceStore';
+import { useFitnessStore } from '@/store/FitnessStore';
 import { useHabitStore } from '@/store/HabitStore';
 import { useHealthStore } from '@/store/HealthStore';
 import { useRelationshipStore } from '@/store/RelationshipStore';
@@ -17,6 +18,7 @@ export default function RootLayout() {
   const getFinanceEntries = useFinanceStore((s) => s.getEntries);
   const getTasks = useTaskStore((s) => s.getTasks);
   const getRelationships = useRelationshipStore((s) => s.getRelationships);
+  const getFitnessEntries = useFitnessStore((s) => s.getFitnessEntries)
 
   async function init() {
     await getTasks();
@@ -24,6 +26,7 @@ export default function RootLayout() {
     await getHealthEntries();
     await getFinanceEntries();
     await getRelationships();
+    await getFitnessEntries();
   }
 
   useEffect(() => {

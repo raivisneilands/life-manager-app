@@ -1,6 +1,7 @@
-import Menu from '@/components/Menu';
+import AppHeader from '@/components/AppHeader';
 import { useFinanceStore } from '@/store/FinanceStore';
 import { useFitnessStore } from '@/store/FitnessStore';
+import { useGoalStore } from '@/store/GoalStore';
 import { useHabitStore } from '@/store/HabitStore';
 import { useHealthStore } from '@/store/HealthStore';
 import { useRelationshipStore } from '@/store/RelationshipStore';
@@ -19,6 +20,7 @@ export default function RootLayout() {
   const getTasks = useTaskStore((s) => s.getTasks);
   const getRelationships = useRelationshipStore((s) => s.getRelationships);
   const getFitnessEntries = useFitnessStore((s) => s.getFitnessEntries)
+  const getGoals = useGoalStore((s) => s.getGoals);
 
   async function init() {
     await getTasks();
@@ -27,6 +29,7 @@ export default function RootLayout() {
     await getFinanceEntries();
     await getRelationships();
     await getFitnessEntries();
+    await getGoals();
   }
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export default function RootLayout() {
     <ThemeProvider theme={theme}>
       <SafeAreaProvider>
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-          <Menu/>
+          <AppHeader /> 
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
           </Stack>

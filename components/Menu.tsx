@@ -1,6 +1,5 @@
 import styled from '@emotion/native';
 import { Link } from 'expo-router';
-import { useRef, useState } from 'react';
 import { Animated, Dimensions, Modal } from 'react-native';
 
 const DRAWER_WIDTH = Dimensions.get('window').width * 0.55;
@@ -10,7 +9,7 @@ const HamburgerButton = styled.TouchableOpacity`
   padding-top: 5px;
 `;
 
-const HamburgerText = styled.Text(({theme}) => ({
+const HamburgerText = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 22,
 }));
@@ -38,22 +37,19 @@ const DrawerTitle = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 22,
   fontWeight: 700,
-  paddingTop: 0,
-  paddingRight: 24,
-  paddingBottom: 24,
-  paddingLeft: 24,
+  padding: 24,
   borderBottomWidth: 1,
   borderBottomColor: theme.border ?? '#333',
 }));
 
-const MenuLink = styled.TouchableOpacity(({theme}) => ({
+const MenuLink = styled.TouchableOpacity(({ theme }) => ({
   paddingVertical: 16,
   paddingHorizontal: 24,
   borderBottomWidth: 1,
   borderBottomColor: theme.border ?? '#333',
 }));
 
-const MenuLinkText = styled.Text(({theme}) => ({
+const MenuLinkText = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 16,
 }));
@@ -65,74 +61,58 @@ const LINKS = [
   { label: 'Settings', key: 'settings' },
 ];
 
-export default function Menu() {
-  const [visible, setVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
-  const backdropAnim = useRef(new Animated.Value(0)).current;
+type Props = {
+  visible: boolean;
+  open: () => void;
+  close: () => void;
+  slideAnim: Animated.Value;
+  backdropAnim: Animated.Value;
+};
 
-
-  function openDrawer() {
-    setVisible(true);
-    Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        bounciness: 0,
-      }),
-      Animated.timing(backdropAnim, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }
-
-  function closeDrawer() {
-    Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: -DRAWER_WIDTH,
-        useNativeDriver: true,
-        bounciness: 0,
-      }),
-      Animated.timing(backdropAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => setVisible(false));
-  }
-
+export default function Menu({
+  visible,
+  open,
+  close,
+  slideAnim,
+  backdropAnim,
+}: Props) {
   return (
     <>
-      <HamburgerButton onPress={openDrawer} activeOpacity={0.7}>
+      {/* Hamburger still inside Menu */}
+      <HamburgerButton onPress={open} activeOpacity={0.7}>
         <HamburgerText>☰</HamburgerText>
       </HamburgerButton>
 
-    <Modal visible={visible} transparent animationType="none" onRequestClose={closeDrawer}>
-    <Animated.View style={{ flex: 1, opacity: backdropAnim, position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-        <Backdrop onPress={closeDrawer} activeOpacity={1} />
-    </Animated.View>
-
-    <Drawer style={{ transform: [{ translateX: slideAnim }] }}>
-        <DrawerTitle>Menu</DrawerTitle>
-        {LINKS.map((link) => (
-        <MenuLink
-            key={link.key}
-            activeOpacity={0.6}
+      <Modal visible={visible} transparent animationType="none" onRequestClose={close}>
+        <Animated.View
+          style={{
+            flex: 1,
+            opacity: backdropAnim,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
         >
-            <Link
-              href={`/${link.key}` as any}
-              onPress={() => {
-                closeDrawer();
-                console.log(`Navigate to: ${link.key}`);
-              }}
-            >
-            <MenuLinkText>{link.label}</MenuLinkText>
-            </Link>
-        </MenuLink>
-        ))}
-    </Drawer>
-    </Modal>
+          <Backdrop onPress={close} activeOpacity={1} />
+        </Animated.View>
+
+        <Drawer style={{ transform: [{ translateX: slideAnim }] }}>
+          <DrawerTitle>Menu</DrawerTitle>
+
+          {LINKS.map((link) => (
+            <MenuLink key={link.key} activeOpacity={0.6}>
+              <Link
+                href={`/${link.key}` as any}
+                onPress={close}
+              >
+                <MenuLinkText>{link.label}</MenuLinkText>
+              </Link>
+            </MenuLink>
+          ))}
+        </Drawer>
+      </Modal>
     </>
   );
 }

@@ -10,6 +10,7 @@ type FitnessStore = {
   addFitnessEntry: (fitnessEntry: FitnessEntry) => Promise<void>;
   removeFitnessEntry: (fitnessEntryId: string) => Promise<void>;
   updateFitnessEntry: (fitnessEntry: FitnessEntry) => Promise<void>;
+  clearFitnessEntries: () => Promise<void>;
 };
 
 export const useFitnessStore = create<FitnessStore>((set, get) => ({
@@ -38,5 +39,10 @@ export const useFitnessStore = create<FitnessStore>((set, get) => ({
     const updated = get().fitnessEntries.map((r) => r.id === fitnessEntry.id ? fitnessEntry : r);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ fitnessEntries: updated });
-  } 
+  }, 
+
+  clearFitnessEntries: async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    set({ fitnessEntries: [] });
+  },
 }));

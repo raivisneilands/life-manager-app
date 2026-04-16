@@ -1,7 +1,16 @@
+import { ThemeContext, ThemeMode } from '@/app/_layout';
+import { useFinanceStore } from '@/store/FinanceStore';
+import { useFitnessStore } from '@/store/FitnessStore';
+import { useGoalStore } from '@/store/GoalStore';
+import { useHabitStore } from '@/store/HabitStore';
+import { useHealthStore } from '@/store/HealthStore';
+import { useRelationshipStore } from '@/store/RelationshipStore';
+import { useTaskStore } from '@/store/TaskStore';
 import styled from '@emotion/native';
 import { MaterialIcons } from '@expo/vector-icons';
-import React from 'react';
-import { ScrollView, Switch } from 'react-native';
+import { router } from 'expo-router';
+import { useContext, useState } from 'react';
+import { Modal, ScrollView } from 'react-native';
 
 const Container = styled.View(({ theme }) => ({
   flex: 1,
@@ -50,15 +59,7 @@ const Card = styled.View(({ theme }) => ({
   marginBottom: 12,
 }));
 
-const SettingRow = styled.TouchableOpacity(({ theme }) => ({
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingVertical: 14,
-  paddingHorizontal: 16,
-  gap: 14,
-}));
-
-const SettingRowStatic = styled.View(() => ({
+const SettingRow = styled.TouchableOpacity(() => ({
   flexDirection: 'row',
   alignItems: 'center',
   paddingVertical: 14,
@@ -72,7 +73,7 @@ const RowDivider = styled.View(({ theme }) => ({
   marginLeft: 46,
 }));
 
-const IconWrapper = styled.View(({ theme, color }: { theme?: any; color: string }) => ({
+const IconWrapper = styled.View(({ color }: { color: string }) => ({
   width: 30,
   height: 30,
   borderRadius: 8,
@@ -102,50 +103,7 @@ const SettingValue = styled.Text(({ theme }) => ({
   fontSize: 14,
 }));
 
-const ProfileCard = styled.View(({ theme }) => ({
-  backgroundColor: theme.card,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: theme.border,
-  padding: 16,
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 14,
-  marginBottom: 12,
-}));
-
-const Avatar = styled.View(({ theme }) => ({
-  width: 56,
-  height: 56,
-  borderRadius: 28,
-  backgroundColor: theme.primary,
-  alignItems: 'center',
-  justifyContent: 'center',
-}));
-
-const AvatarText = styled.Text(() => ({
-  color: '#fff',
-  fontSize: 20,
-  fontWeight: '700',
-}));
-
-const ProfileInfo = styled.View(() => ({
-  flex: 1,
-}));
-
-const ProfileName = styled.Text(({ theme }) => ({
-  color: theme.textPrimary,
-  fontSize: 17,
-  fontWeight: '700',
-}));
-
-const ProfileEmail = styled.Text(({ theme }) => ({
-  color: theme.textSecondary,
-  fontSize: 13,
-  marginTop: 2,
-}));
-
-const DangerText = styled.Text(({ theme }) => ({
+const DangerLabel = styled.Text(({ theme }) => ({
   color: theme.danger,
   fontSize: 15,
   fontWeight: '500',
@@ -158,59 +116,99 @@ const VersionText = styled.Text(({ theme }) => ({
   paddingVertical: 24,
 }));
 
-type ToggleSettingProps = {
-  icon: keyof typeof MaterialIcons.glyphMap;
-  iconBg: string;
-  label: string;
-  subtitle?: string;
-  value: boolean;
-  onValueChange: (val: boolean) => void;
-  showDivider?: boolean;
-};
+// ─── Confirm modal ────────────────────────────────────────────────────────────
 
-function ToggleSetting({ icon, iconBg, label, subtitle, value, onValueChange, showDivider }: ToggleSettingProps) {
-  return (
-    <>
-      <SettingRowStatic>
-        <IconWrapper color={iconBg}>
-          <MaterialIcons name={icon} size={16} color="#fff" />
-        </IconWrapper>
-        <SettingInfo>
-          <SettingLabel>{label}</SettingLabel>
-          {subtitle && <SettingSubtitle>{subtitle}</SettingSubtitle>}
-        </SettingInfo>
-        <Switch
-          value={value}
-          onValueChange={onValueChange}
-          trackColor={{ false: '#555', true: '#6366F1' }}
-          thumbColor="#fff"
-        />
-      </SettingRowStatic>
-      {showDivider && <RowDivider />}
-    </>
-  );
-}
+const ConfirmBackdrop = styled.TouchableOpacity(() => ({
+  position: 'absolute',
+  top: 0, left: 0, right: 0, bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+}));
+
+const ConfirmBox = styled.View(({ theme }) => ({
+  position: 'absolute',
+  top: '40%',
+  left: 24,
+  right: 24,
+  backgroundColor: theme.card,
+  borderRadius: 16,
+  padding: 24,
+  borderWidth: 1,
+  borderColor: theme.border,
+}));
+
+const ConfirmTitle = styled.Text(({ theme }) => ({
+  color: theme.textPrimary,
+  fontSize: 18,
+  fontWeight: '700',
+  marginBottom: 8,
+}));
+
+const ConfirmMessage = styled.Text(({ theme }) => ({
+  color: theme.textSecondary,
+  fontSize: 14,
+  lineHeight: 20,
+  marginBottom: 24,
+}));
+
+const ConfirmButtonRow = styled.View(() => ({
+  flexDirection: 'row',
+  gap: 12,
+}));
+
+const CancelButton = styled.TouchableOpacity(({ theme }) => ({
+  flex: 1,
+  paddingVertical: 14,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: theme.border,
+  alignItems: 'center',
+}));
+
+const CancelButtonText = styled.Text(({ theme }) => ({
+  color: theme.textSecondary,
+  fontSize: 15,
+  fontWeight: '600',
+}));
+
+const ConfirmDeleteButton = styled.TouchableOpacity(({ theme }) => ({
+  flex: 1,
+  paddingVertical: 14,
+  borderRadius: 10,
+  backgroundColor: theme.danger,
+  alignItems: 'center',
+}));
+
+const ConfirmDeleteButtonText = styled.Text(() => ({
+  color: '#fff',
+  fontSize: 15,
+  fontWeight: '600',
+}));
+
+// ─── Row components ───────────────────────────────────────────────────────────
 
 type LinkSettingProps = {
   icon: keyof typeof MaterialIcons.glyphMap;
   iconBg: string;
   label: string;
-  value?: string;
   subtitle?: string;
-  showDivider?: boolean;
+  value?: string;
   danger?: boolean;
-  onPress?: () => void;
+  showDivider?: boolean;
+  onPress: () => void;
 };
 
-function LinkSetting({ icon, iconBg, label, value, subtitle, showDivider, danger, onPress }: LinkSettingProps) {
+function LinkSetting({ icon, iconBg, label, subtitle, value, danger, showDivider, onPress }: LinkSettingProps) {
   return (
     <>
-      <SettingRow activeOpacity={0.6} onPress={onPress ?? (() => console.log(`Tapped: ${label}`))}>
+      <SettingRow activeOpacity={0.6} onPress={onPress}>
         <IconWrapper color={iconBg}>
           <MaterialIcons name={icon} size={16} color="#fff" />
         </IconWrapper>
         <SettingInfo>
-          {danger ? <DangerText>{label}</DangerText> : <SettingLabel>{label}</SettingLabel>}
+          {danger
+            ? <DangerLabel>{label}</DangerLabel>
+            : <SettingLabel>{label}</SettingLabel>
+          }
           {subtitle && <SettingSubtitle>{subtitle}</SettingSubtitle>}
         </SettingInfo>
         {value && <SettingValue>{value}</SettingValue>}
@@ -221,120 +219,73 @@ function LinkSetting({ icon, iconBg, label, value, subtitle, showDivider, danger
   );
 }
 
-export default function SettingsPage() {
-  const [notifications, setNotifications] = React.useState(true);
-  const [dailyReminder, setDailyReminder] = React.useState(true);
-  const [biometrics, setBiometrics] = React.useState(false);
-  const [icloudSync, setIcloudSync] = React.useState(true);
+// ─── Component ────────────────────────────────────────────────────────────────
+
+type ConfirmAction = {
+  title: string;
+  message: string;
+  onConfirm: () => void;
+};
+
+const THEME_OPTIONS: { label: string; value: ThemeMode }[] = [
+  { label: 'Light', value: 'light' },
+  { label: 'Dark', value: 'dark' },
+  { label: 'System', value: 'system' },
+];
+
+export default function SettingsScreen() {
+  const {themeMode, setThemeMode} = useContext(ThemeContext);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+
+  const clearTasks = useTaskStore((s) => s.clearTasks);
+  const clearHabits = useHabitStore((s) => s.clearHabits);
+  const clearHealth = useHealthStore((s) => s.clearEntries);
+  const clearFinance = useFinanceStore((s) => s.clearEntries);
+  const clearRelationships = useRelationshipStore((s) => s.clearRelationships);
+  const clearFitness = useFitnessStore((s) => s.clearFitnessEntries);
+  const clearGoals = useGoalStore((s) => s.clearGoals);
+
+  async function handleClearAllData() {
+    await Promise.all([
+      clearTasks(),
+      clearHabits(),
+      clearHealth(),
+      clearFinance(),
+      clearRelationships(),
+      clearFitness(),
+      clearGoals(),
+    ]);
+    setConfirmAction(null);
+  }
 
   return (
     <Container>
       <ScrollView showsVerticalScrollIndicator={false}>
         <Header>
           <Title>Settings</Title>
-          <Subtitle>Manage your preferences and account</Subtitle>
+          <Subtitle>Manage your preferences</Subtitle>
         </Header>
-
-        <Section>
-          <SectionTitle>Profile</SectionTitle>
-          <ProfileCard>
-            <Avatar>
-              <AvatarText>JD</AvatarText>
-            </Avatar>
-            <ProfileInfo>
-              <ProfileName>John Doe</ProfileName>
-              <ProfileEmail>john.doe@email.com</ProfileEmail>
-            </ProfileInfo>
-            <MaterialIcons name="chevron-right" size={20} color="#888" />
-          </ProfileCard>
-        </Section>
-
-        <Section>
-          <SectionTitle>Notifications</SectionTitle>
-          <Card>
-            <ToggleSetting
-              icon="notifications"
-              iconBg="#6366F1"
-              label="Push Notifications"
-              subtitle="Reminders and updates"
-              value={notifications}
-              onValueChange={setNotifications}
-              showDivider
-            />
-            <ToggleSetting
-              icon="alarm"
-              iconBg="#F59E0B"
-              label="Daily Reminder"
-              subtitle="Get nudged to log your day"
-              value={dailyReminder}
-              onValueChange={setDailyReminder}
-            />
-          </Card>
-        </Section>
 
         <Section>
           <SectionTitle>Appearance</SectionTitle>
           <Card>
-            <LinkSetting
-              icon="brightness-6"
-              iconBg="#8B5CF6"
-              label="Theme"
-              value="System"
-              showDivider
-            />
-            <LinkSetting
-              icon="text-fields"
-              iconBg="#3B82F6"
-              label="Font Size"
-              value="Medium"
-            />
-          </Card>
-        </Section>
-
-        <Section>
-          <SectionTitle>Security</SectionTitle>
-          <Card>
-            <ToggleSetting
-              icon="fingerprint"
-              iconBg="#10B981"
-              label="Biometric Lock"
-              subtitle="Use Face ID or fingerprint"
-              value={biometrics}
-              onValueChange={setBiometrics}
-              showDivider
-            />
-            <LinkSetting
-              icon="lock"
-              iconBg="#6B7280"
-              label="Change PIN"
-            />
-          </Card>
-        </Section>
-
-        <Section>
-          <SectionTitle>Data & Sync</SectionTitle>
-          <Card>
-            <ToggleSetting
-              icon="cloud"
-              iconBg="#0EA5E9"
-              label="iCloud Sync"
-              subtitle="Keep your data backed up"
-              value={icloudSync}
-              onValueChange={setIcloudSync}
-              showDivider
-            />
-            <LinkSetting
-              icon="download"
-              iconBg="#14B8A6"
-              label="Export Data"
-              subtitle="Download all your data as CSV"
-              showDivider
-            />
-            <LinkSetting
-              icon="delete-sweep"
-              iconBg="#6B7280"
-              label="Clear Cache"
-            />
+            {THEME_OPTIONS.map((option, index) => (
+              <LinkSetting
+                key={option.value}
+                icon={
+                  option.value === 'light'
+                    ? 'light-mode'
+                    : option.value === 'dark'
+                    ? 'dark-mode'
+                    : 'brightness-auto'
+                }
+                iconBg={themeMode === option.value ? '#8B5CF6' : '#6B7280'}
+                label={option.label}
+                value={themeMode === option.value ? '✓' : ''}
+                showDivider={index < THEME_OPTIONS.length - 1}
+                onPress={() => setThemeMode(option.value)}
+              />
+            ))}
           </Card>
         </Section>
 
@@ -347,41 +298,68 @@ export default function SettingsPage() {
               label="App Version"
               value="1.0.0"
               showDivider
+              onPress={() => {}}
             />
             <LinkSetting
               icon="description"
               iconBg="#8B5CF6"
               label="Privacy Policy"
               showDivider
+              onPress={() => router.push('/settings/privacy')}
             />
             <LinkSetting
               icon="gavel"
               iconBg="#6B7280"
               label="Terms of Service"
+              onPress={() => router.push('/settings/terms')}
             />
           </Card>
         </Section>
 
         <Section>
-          <SectionTitle>Account</SectionTitle>
+          <SectionTitle>Data</SectionTitle>
           <Card>
             <LinkSetting
-              icon="logout"
-              iconBg="#F59E0B"
-              label="Sign Out"
-              showDivider
-            />
-            <LinkSetting
-              icon="delete-forever"
+              icon="delete-sweep"
               iconBg="#EF4444"
-              label="Delete Account"
+              label="Clear All Data"
+              subtitle="Permanently deletes everything"
               danger
+              onPress={() =>
+                setConfirmAction({
+                  title: 'Clear All Data',
+                  message:
+                    'This will permanently delete all your tasks, habits, health entries, finance entries, relationships, fitness logs, and goals. This cannot be undone.',
+                  onConfirm: handleClearAllData,
+                })
+              }
             />
           </Card>
         </Section>
 
-        <VersionText>MyApp v1.0.0 — Made with ♥</VersionText>
+        <VersionText>Life Manager v1.0.0 — Mindset Boost</VersionText>
       </ScrollView>
+
+      <Modal
+        visible={!!confirmAction}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmAction(null)}
+      >
+        <ConfirmBackdrop onPress={() => setConfirmAction(null)} activeOpacity={1} />
+        <ConfirmBox>
+          <ConfirmTitle>{confirmAction?.title}</ConfirmTitle>
+          <ConfirmMessage>{confirmAction?.message}</ConfirmMessage>
+          <ConfirmButtonRow>
+            <CancelButton onPress={() => setConfirmAction(null)} activeOpacity={0.7}>
+              <CancelButtonText>Cancel</CancelButtonText>
+            </CancelButton>
+            <ConfirmDeleteButton onPress={confirmAction?.onConfirm} activeOpacity={0.7}>
+              <ConfirmDeleteButtonText>Delete</ConfirmDeleteButtonText>
+            </ConfirmDeleteButton>
+          </ConfirmButtonRow>
+        </ConfirmBox>
+      </Modal>
     </Container>
   );
 }

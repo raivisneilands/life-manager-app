@@ -13,6 +13,7 @@ type GoalStore = {
   addPlanStep: (goalId: string, step: PlanStep) => Promise<void>;
   removePlanStep: (goalId: string, stepId: string) => Promise<void>;
   togglePlanStep: (goalId: string, stepId: string) => Promise<void>;
+  clearGoals: () => Promise<void>;
 };
 
 export const useGoalStore = create<GoalStore>((set, get) => ({
@@ -72,5 +73,10 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
     );
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ goals: updated });
+  },
+
+  clearGoals: async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    set({ goals: [] });
   },
 }));

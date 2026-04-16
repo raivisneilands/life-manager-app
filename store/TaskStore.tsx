@@ -11,6 +11,7 @@ type TaskStore = {
   removeTask: (taskId: string) => Promise<void>;
   toggleTaskCompletion: (taskId: string) => Promise<void>;
   saveTasksToStorage: (tasks: Task[]) => Promise<void>;
+  clearTasks: () => Promise<void>;
 };
 
 const today = new Date().toISOString().split("T")[0];
@@ -59,4 +60,8 @@ export const useTaskStore = create<TaskStore>((set) => ({
   saveTasksToStorage: async (tasks: Task[]) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   },
+  clearTasks: async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    set({ tasks: [] })
+  }
 }));

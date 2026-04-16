@@ -10,6 +10,7 @@ type RelationshipStore = {
   addRelationship: (relationship: Relationship) => Promise<void>;
   removeRelationship: (relationshipId: string) => Promise<void>;
   updateRelationship: (relationship: Relationship) => Promise<void>;
+  clearRelationships: () => Promise<void>;
 };
 
 export const useRelationshipStore = create<RelationshipStore>((set, get) => ({
@@ -38,5 +39,10 @@ export const useRelationshipStore = create<RelationshipStore>((set, get) => ({
     const updated = get().relationships.map((r) => r.id === relationship.id ? relationship : r);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ relationships: updated });
-  } 
+  },
+  
+  clearRelationships: async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    set({ relationships: [] });
+  }
 }));

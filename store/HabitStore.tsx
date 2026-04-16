@@ -10,6 +10,7 @@ type HabitStore = {
   addHabit: (habit: Habit) => Promise<void>;
   removeHabit: (habitId: string) => Promise<void>;
   toggleHabitCompletion: (habitId: string) => Promise<void>;
+  clearHabits: () => Promise<void>;
 };
 
 export const useHabitStore = create<HabitStore>((set, get) => ({
@@ -65,5 +66,10 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ habits: updated });
+  },
+
+  clearHabits: async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    set({ habits: [] });
   },
 }));

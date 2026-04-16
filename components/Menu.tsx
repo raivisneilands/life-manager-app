@@ -55,6 +55,7 @@ const MenuLinkText = styled.Text(({ theme }) => ({
 }));
 
 const LINKS = [
+  { label: 'Home', key: '' },
   { label: 'Relationships', key: 'relationships' },
   { label: 'Fitness & Workouts', key: 'fitness' },
   { label: 'Goals', key: 'goals' },

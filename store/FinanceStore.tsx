@@ -11,6 +11,7 @@ type FinanceStore = {
   removeEntry: (id: string) => Promise<void>;
   getMonthlyFinance: (month: number, year: number) => FinanceEntry[];
   getDailyFinance: (date: string) => FinanceEntry[];
+  clearEntries: () => Promise<void>;
 };
 
 export const useFinanceStore = create<FinanceStore>((set, get) => ({
@@ -46,5 +47,10 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
   // Return all entries for a specific date (yyyy-mm-dd)
   getDailyFinance: (date: string) => {
     return get().entries.filter((e) => e.date.split("T")[0] === date);
+  },
+
+  clearEntries: async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    set({ entries: [] });
   },
 }));

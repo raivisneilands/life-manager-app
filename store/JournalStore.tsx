@@ -10,6 +10,7 @@ type JournalStore = {
   addEntry: (entry: JournalEntry) => Promise<void>;
   updateEntry: (id: string, content: string) => void;
   removeEntry: (id: string) => Promise<void>;
+  clearEntries: () => Promise<void>;
 };
 
 export const useJournalStore = create<JournalStore>((set, get) => ({
@@ -45,5 +46,10 @@ export const useJournalStore = create<JournalStore>((set, get) => ({
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEntries));
       return { entries: updatedEntries };
     });
+  },
+
+  clearEntries: async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    set({ entries: [] });
   },
 }));

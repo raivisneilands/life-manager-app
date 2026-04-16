@@ -10,6 +10,7 @@ type HealthStore = {
   addEntry: (entry: HealthEntry) => Promise<void>;
   removeEntry: (entryId: string) => Promise<void>;
   saveEntriesToStorage: (entries: HealthEntry[]) => Promise<void>;
+  clearEntries: () => Promise<void>;
 };
 
 export const useHealthStore = create<HealthStore>((set) => ({
@@ -36,5 +37,10 @@ export const useHealthStore = create<HealthStore>((set) => ({
   },
   saveEntriesToStorage: async (entries: HealthEntry[]) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  },
+
+  clearEntries: async () => {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    set({ entries: [] });
   },
 }));

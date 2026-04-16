@@ -1,11 +1,9 @@
 import { useTheme } from '@emotion/react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { useColorScheme } from 'react-native';
 
 export default function TabLayout() {
   const theme = useTheme();
-  const scheme = useColorScheme(); // optional, if you want to switch manually
 
   return (
     <Tabs
@@ -94,6 +92,9 @@ export default function TabLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen name="settings/index" options={{ href: null }} />
+      <Tabs.Screen name="settings/privacy" options={{ href: null }} />
+      <Tabs.Screen name="settings/terms" options={{ href: null }} />
     </Tabs>
   );
 }

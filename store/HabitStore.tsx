@@ -1,8 +1,12 @@
 import { Habit } from "@/models/Habit";
+import { useSyncStore } from '@/store/syncStore';
+import { syncDelete, syncFetch, syncUpsert } from '@/utils/supabaseSync';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 const STORAGE_KEY = "life-manager-habits";
+const TABLE = "habits";
+const isSyncing = () => useSyncStore.getState().syncEnabled;
 
 type HabitStore = {
   habits: Habit[];
@@ -17,9 +21,13 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
   habits: [],
 
   getHabits: async () => {
-    const stored = await AsyncStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      set({ habits: JSON.parse(stored) });
+    if (isSyncing()) {
+      const data = await syncFetch<Habit>(TABLE);
+      set({ habits: data });
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } else {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) set({ habits: JSON.parse(stored) });
     }
   },
 
@@ -27,21 +35,21 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
     const updated = [...get().habits, habit];
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ habits: updated });
+    if (isSyncing()) await syncUpsert(TABLE, [habit]);
   },
 
   removeHabit: async (habitId) => {
     const updated = get().habits.filter((h) => h.id !== habitId);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ habits: updated });
+    if (isSyncing()) await syncDelete(TABLE, habitId);
   },
 
   toggleHabitCompletion: async (habitId) => {
     const today = new Date().toISOString().split("T")[0];
-
     const updated = get().habits.map((habit) => {
       if (habit.id !== habitId) return habit;
 
-      // Undo if already completed today
       if (habit.lastCompletedDate === today) {
         return {
           ...habit,
@@ -50,11 +58,9 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
         };
       }
 
-      // Check if streak continues
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       const ymdYesterday = yesterday.toISOString().split("T")[0];
-
       const continuesStreak = habit.lastCompletedDate === ymdYesterday;
 
       return {
@@ -66,6 +72,10 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ habits: updated });
+    if (isSyncing()) {
+      const toggled = updated.find((h) => h.id === habitId);
+      if (toggled) await syncUpsert(TABLE, [toggled]);
+    }
   },
 
   clearHabits: async () => {

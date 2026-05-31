@@ -22,7 +22,7 @@
       "package": "com.lifemanager.lifemanagerapp"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/life-manager-icon.png"
     },
     "plugins": [

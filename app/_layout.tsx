@@ -1,27 +1,28 @@
-import AppHeader from '@/components/AppHeader';
-import { useFinanceStore } from '@/store/FinanceStore';
-import { useFitnessStore } from '@/store/FitnessStore';
-import { useGoalStore } from '@/store/GoalStore';
-import { useHabitStore } from '@/store/HabitStore';
-import { useHealthStore } from '@/store/HealthStore';
-import { useRelationshipStore } from '@/store/RelationshipStore';
-import { useTaskStore } from '@/store/TaskStore';
-import { darkTheme, lightTheme } from '@/theme';
+import AppHeader from "@/components/AppHeader";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { useFinanceStore } from "@/store/FinanceStore";
+import { useFitnessStore } from "@/store/FitnessStore";
+import { useGoalStore } from "@/store/GoalStore";
+import { useHabitStore } from "@/store/HabitStore";
+import { useHealthStore } from "@/store/HealthStore";
+import { useRelationshipStore } from "@/store/RelationshipStore";
+import { useSyncStore } from "@/store/syncStore";
+import { useTaskStore } from "@/store/TaskStore";
+import { darkTheme, lightTheme } from "@/theme";
+import { ThemeProvider } from "@emotion/react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Stack } from "expo-router";
+import { createContext, useEffect, useState } from "react";
+import { Appearance, useColorScheme } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-import { ThemeProvider } from '@emotion/react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack } from 'expo-router';
-import { createContext, useEffect, useState } from 'react';
-import { Appearance, useColorScheme } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = "light" | "dark" | "system";
 
 export const ThemeContext = createContext<{
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
 }>({
-  themeMode: 'system',
+  themeMode: "system",
   setThemeMode: () => {},
 });
 
@@ -43,6 +44,7 @@ export default function RootLayout() {
     await getRelationships();
     await getFitnessEntries();
     await getGoals();
+    await useSyncStore.getState().init();
   }
 
   useEffect(() => {
@@ -51,12 +53,12 @@ export default function RootLayout() {
 
   // ---- THEME LOGIC ----
   const systemScheme = useColorScheme();
-  const [themeMode, setThemeMode] = useState<ThemeMode>('system');
+  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
   // load saved preference
   useEffect(() => {
     (async () => {
-      const saved = await AsyncStorage.getItem('themeMode');
+      const saved = await AsyncStorage.getItem("themeMode");
       if (saved) setThemeMode(saved as ThemeMode);
     })();
   }, []);
@@ -64,7 +66,7 @@ export default function RootLayout() {
   // persist preference
   const updateThemeMode = async (mode: ThemeMode) => {
     setThemeMode(mode);
-    await AsyncStorage.setItem('themeMode', mode);
+    await AsyncStorage.setItem("themeMode", mode);
   };
 
   // listen to system changes (only matters in "system" mode)
@@ -77,24 +79,29 @@ export default function RootLayout() {
   }, []);
 
   // resolve final theme
-  const resolvedScheme =
-    themeMode === 'system' ? systemScheme : themeMode;
+  const resolvedScheme = themeMode === "system" ? systemScheme : themeMode;
 
-  const theme = resolvedScheme === 'dark' ? darkTheme : lightTheme;
+  const theme = resolvedScheme === "dark" ? darkTheme : lightTheme;
 
   // ---- RENDER ----
   return (
-    <ThemeContext.Provider value={{ themeMode, setThemeMode: updateThemeMode }}>
-      <ThemeProvider theme={theme}>
-        <SafeAreaProvider>
-          <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-            <AppHeader />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-            </Stack>
-          </SafeAreaView>
-        </SafeAreaProvider>
-      </ThemeProvider>
-    </ThemeContext.Provider>
+    <AuthProvider>
+      <ThemeContext.Provider
+        value={{ themeMode, setThemeMode: updateThemeMode }}
+      >
+        <ThemeProvider theme={theme}>
+          <SafeAreaProvider>
+            <SafeAreaView
+              style={{ flex: 1, backgroundColor: theme.background }}
+            >
+              <AppHeader />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+            </SafeAreaView>
+          </SafeAreaProvider>
+        </ThemeProvider>
+      </ThemeContext.Provider>
+    </AuthProvider>
   );
 }

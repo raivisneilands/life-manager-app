@@ -1,8 +1,12 @@
 import { FinanceEntry } from "@/models/FinanceEntry";
+import { useSyncStore } from "@/store/syncStore";
+import { syncDelete, syncFetch, syncUpsert } from "@/utils/supabaseSync";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 const STORAGE_KEY = "life-manager-finance";
+const TABLE = "finance_entries";
+const isSyncing = () => useSyncStore.getState().syncEnabled;
 
 type FinanceStore = {
   entries: FinanceEntry[];
@@ -18,9 +22,13 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
   entries: [],
 
   getEntries: async () => {
-    const stored = await AsyncStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      set({ entries: JSON.parse(stored) });
+    if (isSyncing()) {
+      const data = await syncFetch<FinanceEntry>(TABLE);
+      set({ entries: data });
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } else {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) set({ entries: JSON.parse(stored) });
     }
   },
 
@@ -28,15 +36,16 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
     const updated = [...get().entries, entry];
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ entries: updated });
+    if (isSyncing()) await syncUpsert(TABLE, [entry]);
   },
 
   removeEntry: async (id) => {
     const updated = get().entries.filter((e) => e.id !== id);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ entries: updated });
+    if (isSyncing()) await syncDelete(TABLE, id);
   },
 
-  // Return all entries for a given month/year
   getMonthlyFinance: (month: number, year: number) => {
     return get().entries.filter((e) => {
       const d = new Date(e.date);
@@ -44,7 +53,6 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
     });
   },
 
-  // Return all entries for a specific date (yyyy-mm-dd)
   getDailyFinance: (date: string) => {
     return get().entries.filter((e) => e.date.split("T")[0] === date);
   },

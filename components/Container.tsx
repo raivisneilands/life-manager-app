@@ -1,5 +1,5 @@
-import styled from '@emotion/native';
-import { ReactNode } from 'react';
+import styled from "@emotion/native";
+import { ReactNode } from "react";
 
 type ContainerProps = {
   children: ReactNode;
@@ -8,7 +8,7 @@ type ContainerProps = {
 const AppContainer = styled.View(({ theme }) => ({
   flex: 1,
   backgroundColor: theme.background,
-  padding: 15,
+  paddingHorizontal: 15,
 }));
 
 export default function Container({ children }: ContainerProps) {

@@ -1,25 +1,27 @@
-import { ThemeContext, ThemeMode } from '@/app/_layout';
-import { useFinanceStore } from '@/store/FinanceStore';
-import { useFitnessStore } from '@/store/FitnessStore';
-import { useGoalStore } from '@/store/GoalStore';
-import { useHabitStore } from '@/store/HabitStore';
-import { useHealthStore } from '@/store/HealthStore';
-import { useRelationshipStore } from '@/store/RelationshipStore';
-import { useTaskStore } from '@/store/TaskStore';
-import styled from '@emotion/native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useContext, useState } from 'react';
-import { Modal, ScrollView } from 'react-native';
+import { ThemeContext, ThemeMode } from "@/app/_layout";
+import Container from "@/components/Container";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFinanceStore } from "@/store/FinanceStore";
+import { useFitnessStore } from "@/store/FitnessStore";
+import { useGoalStore } from "@/store/GoalStore";
+import { useHabitStore } from "@/store/HabitStore";
+import { useHealthStore } from "@/store/HealthStore";
+import { useJournalStore } from "@/store/JournalStore";
+import { useRelationshipStore } from "@/store/RelationshipStore";
+import { useSyncStore } from "@/store/syncStore";
+import { useTaskStore } from "@/store/TaskStore";
+import { downloadSupabaseToLocal, uploadLocalToSupabase } from '@/utils/migrateToSupabase';
+import { supabase } from "@/utils/supabase";
+import styled from "@emotion/native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useContext, useState } from "react";
+import { ActivityIndicator, Modal, ScrollView, Switch } from "react-native";
 
-const Container = styled.View(({ theme }) => ({
-  flex: 1,
-  backgroundColor: theme.background,
-}));
+const isSyncing = () => useSyncStore.getState().syncEnabled
 
 const Header = styled.View(({ theme }) => ({
-  paddingHorizontal: 20,
-  paddingVertical: 24,
+  paddingBottom: 20,
   borderBottomWidth: 1,
   borderBottomColor: theme.border,
 }));
@@ -27,7 +29,7 @@ const Header = styled.View(({ theme }) => ({
 const Title = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 28,
-  fontWeight: '700',
+  fontWeight: "700",
 }));
 
 const Subtitle = styled.Text(({ theme }) => ({
@@ -37,16 +39,15 @@ const Subtitle = styled.Text(({ theme }) => ({
 }));
 
 const Section = styled.View(() => ({
-  paddingHorizontal: 20,
   paddingTop: 24,
 }));
 
 const SectionTitle = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 12,
-  fontWeight: '600',
+  fontWeight: "600",
   letterSpacing: 1,
-  textTransform: 'uppercase',
+  textTransform: "uppercase",
   marginBottom: 12,
 }));
 
@@ -55,13 +56,13 @@ const Card = styled.View(({ theme }) => ({
   borderRadius: 12,
   borderWidth: 1,
   borderColor: theme.border,
-  overflow: 'hidden',
+  overflow: "hidden",
   marginBottom: 12,
 }));
 
 const SettingRow = styled.TouchableOpacity(() => ({
-  flexDirection: 'row',
-  alignItems: 'center',
+  flexDirection: "row",
+  alignItems: "center",
   paddingVertical: 14,
   paddingHorizontal: 16,
   gap: 14,
@@ -78,8 +79,8 @@ const IconWrapper = styled.View(({ color }: { color: string }) => ({
   height: 30,
   borderRadius: 8,
   backgroundColor: color,
-  alignItems: 'center',
-  justifyContent: 'center',
+  alignItems: "center",
+  justifyContent: "center",
 }));
 
 const SettingInfo = styled.View(() => ({
@@ -89,7 +90,7 @@ const SettingInfo = styled.View(() => ({
 const SettingLabel = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 15,
-  fontWeight: '500',
+  fontWeight: "500",
 }));
 
 const SettingSubtitle = styled.Text(({ theme }) => ({
@@ -106,27 +107,30 @@ const SettingValue = styled.Text(({ theme }) => ({
 const DangerLabel = styled.Text(({ theme }) => ({
   color: theme.danger,
   fontSize: 15,
-  fontWeight: '500',
+  fontWeight: "500",
 }));
 
 const VersionText = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 12,
-  textAlign: 'center',
+  textAlign: "center",
   paddingVertical: 24,
 }));
 
 // ─── Confirm modal ────────────────────────────────────────────────────────────
 
 const ConfirmBackdrop = styled.TouchableOpacity(() => ({
-  position: 'absolute',
-  top: 0, left: 0, right: 0, bottom: 0,
-  backgroundColor: 'rgba(0,0,0,0.5)',
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0,0,0,0.5)",
 }));
 
 const ConfirmBox = styled.View(({ theme }) => ({
-  position: 'absolute',
-  top: '40%',
+  position: "absolute",
+  top: "40%",
   left: 24,
   right: 24,
   backgroundColor: theme.card,
@@ -139,7 +143,7 @@ const ConfirmBox = styled.View(({ theme }) => ({
 const ConfirmTitle = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 18,
-  fontWeight: '700',
+  fontWeight: "700",
   marginBottom: 8,
 }));
 
@@ -151,7 +155,7 @@ const ConfirmMessage = styled.Text(({ theme }) => ({
 }));
 
 const ConfirmButtonRow = styled.View(() => ({
-  flexDirection: 'row',
+  flexDirection: "row",
   gap: 12,
 }));
 
@@ -161,13 +165,13 @@ const CancelButton = styled.TouchableOpacity(({ theme }) => ({
   borderRadius: 10,
   borderWidth: 1,
   borderColor: theme.border,
-  alignItems: 'center',
+  alignItems: "center",
 }));
 
 const CancelButtonText = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 15,
-  fontWeight: '600',
+  fontWeight: "600",
 }));
 
 const ConfirmDeleteButton = styled.TouchableOpacity(({ theme }) => ({
@@ -175,13 +179,13 @@ const ConfirmDeleteButton = styled.TouchableOpacity(({ theme }) => ({
   paddingVertical: 14,
   borderRadius: 10,
   backgroundColor: theme.danger,
-  alignItems: 'center',
+  alignItems: "center",
 }));
 
 const ConfirmDeleteButtonText = styled.Text(() => ({
-  color: '#fff',
+  color: "#fff",
   fontSize: 15,
-  fontWeight: '600',
+  fontWeight: "600",
 }));
 
 // ─── Row components ───────────────────────────────────────────────────────────
@@ -197,7 +201,16 @@ type LinkSettingProps = {
   onPress: () => void;
 };
 
-function LinkSetting({ icon, iconBg, label, subtitle, value, danger, showDivider, onPress }: LinkSettingProps) {
+function LinkSetting({
+  icon,
+  iconBg,
+  label,
+  subtitle,
+  value,
+  danger,
+  showDivider,
+  onPress,
+}: LinkSettingProps) {
   return (
     <>
       <SettingRow activeOpacity={0.6} onPress={onPress}>
@@ -205,18 +218,62 @@ function LinkSetting({ icon, iconBg, label, subtitle, value, danger, showDivider
           <MaterialIcons name={icon} size={16} color="#fff" />
         </IconWrapper>
         <SettingInfo>
-          {danger
-            ? <DangerLabel>{label}</DangerLabel>
-            : <SettingLabel>{label}</SettingLabel>
-          }
+          {danger ? (
+            <DangerLabel>{label}</DangerLabel>
+          ) : (
+            <SettingLabel>{label}</SettingLabel>
+          )}
           {subtitle && <SettingSubtitle>{subtitle}</SettingSubtitle>}
         </SettingInfo>
         {value && <SettingValue>{value}</SettingValue>}
-        {!danger && <MaterialIcons name="chevron-right" size={20} color="#888" />}
+        {!danger && (
+          <MaterialIcons name="chevron-right" size={20} color="#888" />
+        )}
       </SettingRow>
       {showDivider && <RowDivider />}
     </>
   );
+}
+
+function SwitchSetting({
+  icon,
+  iconBg,
+  label,
+  subtitle,
+  value,
+  onValueChange,
+  showDivider,
+}: SwitchSettingProps) {
+  return (
+    <>
+      <SettingRow activeOpacity={1}>
+        <IconWrapper color={iconBg}>
+          <MaterialIcons name={icon} size={16} color="#fff" />
+        </IconWrapper>
+        <SettingInfo>
+          <SettingLabel>{label}</SettingLabel>
+          {subtitle && <SettingSubtitle>{subtitle}</SettingSubtitle>}
+        </SettingInfo>
+        <Switch
+          value={value}
+          onValueChange={onValueChange}
+          trackColor={{ false: '#6B7280', true: '#8B5CF6' }}
+          thumbColor="#fff"
+        />
+      </SettingRow>
+      {showDivider && <RowDivider />}
+    </>
+  )
+}
+
+interface SwitchSettingProps {
+  icon: keyof typeof MaterialIcons.glyphMap;
+  iconBg: string
+  label: string
+  subtitle?: string
+  value: boolean
+  onValueChange: (val: boolean) => void
+  showDivider?: boolean
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -228,14 +285,20 @@ type ConfirmAction = {
 };
 
 const THEME_OPTIONS: { label: string; value: ThemeMode }[] = [
-  { label: 'Light', value: 'light' },
-  { label: 'Dark', value: 'dark' },
-  { label: 'System', value: 'system' },
+  { label: "Light", value: "light" },
+  { label: "Dark", value: "dark" },
+  { label: "System", value: "system" },
 ];
 
 export default function SettingsScreen() {
-  const {themeMode, setThemeMode} = useContext(ThemeContext);
-  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const { themeMode, setThemeMode } = useContext(ThemeContext);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
+    null,
+  );
+  const { syncEnabled, setSyncEnabled } = useSyncStore()
+  const [showModal, setShowModal] = useState(false)
+  const [migrating, setMigrating] = useState(false)
+  const { session } = useAuth() // your existing AuthContext
 
   const clearTasks = useTaskStore((s) => s.clearTasks);
   const clearHabits = useHabitStore((s) => s.clearHabits);
@@ -244,6 +307,44 @@ export default function SettingsScreen() {
   const clearRelationships = useRelationshipStore((s) => s.clearRelationships);
   const clearFitness = useFitnessStore((s) => s.clearFitnessEntries);
   const clearGoals = useGoalStore((s) => s.clearGoals);
+  const clearJournal = useJournalStore((s) => s.clearEntries);
+
+  const handleSyncToggle = async (val: boolean) => {
+    if (val && !session) {
+      router.push('/account') // or wherever your auth screen lives
+      return
+    }
+    if (val) {
+      setShowModal(true) // ask user what to do with local data
+    } else {
+      await setSyncEnabled(false)
+    }
+  }
+
+  const handleUpload = async () => {
+    setMigrating(true)
+    await uploadLocalToSupabase()
+    await setSyncEnabled(true)
+    setMigrating(false)
+    setShowModal(false)
+  }
+
+  const handleDownload = async () => {
+    setMigrating(true)
+    await downloadSupabaseToLocal()
+    await setSyncEnabled(true)
+    setMigrating(false)
+    setShowModal(false)
+    // Re-init all stores so they pick up the new local data
+    await useRelationshipStore.getState().getRelationships()
+    await useGoalStore.getState().getGoals()
+    await useFitnessStore.getState().getFitnessEntries()
+    await useHabitStore.getState().getHabits()
+    await useTaskStore.getState().getTasks()
+    await useHealthStore.getState().getEntries()
+    await useFinanceStore.getState().getEntries()
+    await useJournalStore.getState().getEntries()
+  }
 
   async function handleClearAllData() {
     await Promise.all([
@@ -254,7 +355,25 @@ export default function SettingsScreen() {
       clearRelationships(),
       clearFitness(),
       clearGoals(),
+      clearJournal(),
     ]);
+
+    if (isSyncing()) {
+      const { data } = await supabase.auth.getSession()
+      const user_id = data.session?.user.id
+      if (user_id) {
+        await Promise.all([
+          supabase.from('tasks').delete().eq('user_id', user_id),
+          supabase.from('habits').delete().eq('user_id', user_id),
+          supabase.from('health_entries').delete().eq('user_id', user_id),
+          supabase.from('finance_entries').delete().eq('user_id', user_id),
+          supabase.from('relationships').delete().eq('user_id', user_id),
+          supabase.from('fitness_entries').delete().eq('user_id', user_id),
+          supabase.from('goals').delete().eq('user_id', user_id),
+          supabase.from('journal_entries').delete().eq('user_id', user_id),
+        ])
+      }
+    }
     setConfirmAction(null);
   }
 
@@ -273,19 +392,33 @@ export default function SettingsScreen() {
               <LinkSetting
                 key={option.value}
                 icon={
-                  option.value === 'light'
-                    ? 'light-mode'
-                    : option.value === 'dark'
-                    ? 'dark-mode'
-                    : 'brightness-auto'
+                  option.value === "light"
+                    ? "light-mode"
+                    : option.value === "dark"
+                      ? "dark-mode"
+                      : "brightness-auto"
                 }
-                iconBg={themeMode === option.value ? '#8B5CF6' : '#6B7280'}
+                iconBg={themeMode === option.value ? "#8B5CF6" : "#6B7280"}
                 label={option.label}
-                value={themeMode === option.value ? '✓' : ''}
+                value={themeMode === option.value ? "✓" : ""}
                 showDivider={index < THEME_OPTIONS.length - 1}
                 onPress={() => setThemeMode(option.value)}
               />
             ))}
+          </Card>
+        </Section>
+
+        <Section>
+          <SectionTitle>Data & Sync</SectionTitle>
+          <Card>
+            <SwitchSetting
+              icon="backup"
+              iconBg={syncEnabled ? '#8B5CF6' : '#6B7280'}
+              label="Sync to cloud"
+              subtitle="Requires an account"
+              value={syncEnabled}
+              onValueChange={handleSyncToggle}
+            />
           </Card>
         </Section>
 
@@ -305,13 +438,13 @@ export default function SettingsScreen() {
               iconBg="#8B5CF6"
               label="Privacy Policy"
               showDivider
-              onPress={() => router.push('/settings/privacy')}
+              onPress={() => router.push("/settings/privacy")}
             />
             <LinkSetting
               icon="gavel"
               iconBg="#6B7280"
               label="Terms of Service"
-              onPress={() => router.push('/settings/terms')}
+              onPress={() => router.push("/settings/terms")}
             />
           </Card>
         </Section>
@@ -327,9 +460,9 @@ export default function SettingsScreen() {
               danger
               onPress={() =>
                 setConfirmAction({
-                  title: 'Clear All Data',
+                  title: "Clear All Data",
                   message:
-                    'This will permanently delete all your tasks, habits, health entries, finance entries, relationships, fitness logs, and goals. This cannot be undone.',
+                    "This will permanently delete all your tasks, habits, health entries, finance entries, relationships, fitness logs, and goals. This cannot be undone.",
                   onConfirm: handleClearAllData,
                 })
               }
@@ -346,18 +479,55 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setConfirmAction(null)}
       >
-        <ConfirmBackdrop onPress={() => setConfirmAction(null)} activeOpacity={1} />
+        <ConfirmBackdrop
+          onPress={() => setConfirmAction(null)}
+          activeOpacity={1}
+        />
         <ConfirmBox>
           <ConfirmTitle>{confirmAction?.title}</ConfirmTitle>
           <ConfirmMessage>{confirmAction?.message}</ConfirmMessage>
           <ConfirmButtonRow>
-            <CancelButton onPress={() => setConfirmAction(null)} activeOpacity={0.7}>
+            <CancelButton
+              onPress={() => setConfirmAction(null)}
+              activeOpacity={0.7}
+            >
               <CancelButtonText>Cancel</CancelButtonText>
             </CancelButton>
-            <ConfirmDeleteButton onPress={confirmAction?.onConfirm} activeOpacity={0.7}>
+            <ConfirmDeleteButton
+              onPress={confirmAction?.onConfirm}
+              activeOpacity={0.7}
+            >
               <ConfirmDeleteButtonText>Delete</ConfirmDeleteButtonText>
             </ConfirmDeleteButton>
           </ConfirmButtonRow>
+        </ConfirmBox>
+      </Modal>
+      <Modal
+        visible={showModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !migrating && setShowModal(false)}
+      >
+        <ConfirmBackdrop
+          onPress={() => !migrating && setShowModal(false)}
+          activeOpacity={1}
+        />
+        <ConfirmBox>
+          <ConfirmTitle>You have existing local data</ConfirmTitle>
+          <ConfirmMessage>What would you like to do with it?</ConfirmMessage>
+
+          {migrating ? (
+            <ActivityIndicator style={{ marginVertical: 16 }} />
+          ) : (
+            <ConfirmButtonRow>
+              <CancelButton onPress={handleDownload} activeOpacity={0.7}>
+                <CancelButtonText>Use cloud data</CancelButtonText>
+              </CancelButton>
+              <ConfirmDeleteButton onPress={handleUpload} activeOpacity={0.7}>
+                <ConfirmDeleteButtonText>Upload local</ConfirmDeleteButtonText>
+              </ConfirmDeleteButton>
+            </ConfirmButtonRow>
+          )}
         </ConfirmBox>
       </Modal>
     </Container>

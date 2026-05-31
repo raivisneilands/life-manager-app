@@ -1,6 +1,6 @@
-import HabitsPage from '@/screens/habits';
-import { useTheme } from '@emotion/react';
-import { KeyboardAvoidingView, Platform } from 'react-native';
+import HabitsPage from "@/screens/habits";
+import { useTheme } from "@emotion/react";
+import { KeyboardAvoidingView, Platform } from "react-native";
 
 export default function habits() {
   const theme = useTheme();
@@ -11,7 +11,7 @@ export default function habits() {
         paddingVertical: 10,
         backgroundColor: theme.background,
       }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <HabitsPage />
     </KeyboardAvoidingView>

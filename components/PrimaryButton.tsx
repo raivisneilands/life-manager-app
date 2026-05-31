@@ -1,5 +1,5 @@
-import styled from '@emotion/native';
-import { ReactNode } from 'react';
+import styled from "@emotion/native";
+import { ReactNode } from "react";
 
 type PrimaryButtonProps = {
   children: ReactNode;
@@ -12,14 +12,14 @@ const StyledButton = styled.TouchableOpacity(({ theme }) => ({
   paddingVertical: 10,
   paddingHorizontal: 15,
   borderRadius: 12,
-  alignItems: 'center',
-  justifyContent: 'center',
+  alignItems: "center",
+  justifyContent: "center",
 }));
 
 const StyledButtonText = styled.Text(({ theme }) => ({
-  color: '#ffffff', // or theme.surface if you prefer contrast
+  color: "#ffffff",
   fontSize: 14,
-  fontWeight: 'bold',
+  fontWeight: "bold",
 }));
 
 // ---------- component ----------

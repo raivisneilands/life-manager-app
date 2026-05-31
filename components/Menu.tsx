@@ -1,8 +1,8 @@
-import styled from '@emotion/native';
-import { Link } from 'expo-router';
-import { Animated, Dimensions, Modal } from 'react-native';
+import styled from "@emotion/native";
+import { Link } from "expo-router";
+import { Animated, Dimensions, Modal } from "react-native";
 
-const DRAWER_WIDTH = Dimensions.get('window').width * 0.55;
+const DRAWER_WIDTH = Dimensions.get("window").width * 0.55;
 
 const HamburgerButton = styled.TouchableOpacity`
   padding-left: 16px;
@@ -20,14 +20,14 @@ const Backdrop = styled.TouchableOpacity`
 `;
 
 const Drawer = styled(Animated.View)(({ theme }) => ({
-  position: 'absolute',
+  position: "absolute",
   top: 0,
   left: 0,
   bottom: 0,
   width: DRAWER_WIDTH,
   backgroundColor: theme.background,
   paddingTop: 60,
-  shadowColor: '#000',
+  shadowColor: "#000",
   shadowOpacity: 0.25,
   shadowRadius: 8,
   elevation: 10,
@@ -39,14 +39,14 @@ const DrawerTitle = styled.Text(({ theme }) => ({
   fontWeight: 700,
   padding: 24,
   borderBottomWidth: 1,
-  borderBottomColor: theme.border ?? '#333',
+  borderBottomColor: theme.border ?? "#333",
 }));
 
 const MenuLink = styled.TouchableOpacity(({ theme }) => ({
   paddingVertical: 16,
   paddingHorizontal: 24,
   borderBottomWidth: 1,
-  borderBottomColor: theme.border ?? '#333',
+  borderBottomColor: theme.border ?? "#333",
 }));
 
 const MenuLinkText = styled.Text(({ theme }) => ({
@@ -55,11 +55,12 @@ const MenuLinkText = styled.Text(({ theme }) => ({
 }));
 
 const LINKS = [
-  { label: 'Home', key: '' },
-  { label: 'Relationships', key: 'relationships' },
-  { label: 'Fitness & Workouts', key: 'fitness' },
-  { label: 'Goals', key: 'goals' },
-  { label: 'Settings', key: 'settings' },
+  { label: "Home", key: "" },
+  { label: "Relationships", key: "relationships" },
+  { label: "Fitness & Workouts", key: "fitness" },
+  { label: "Goals", key: "goals" },
+  { label: "Settings", key: "settings" },
+  { label: "Account", key: "account" },
 ];
 
 type Props = {
@@ -84,12 +85,17 @@ export default function Menu({
         <HamburgerText>☰</HamburgerText>
       </HamburgerButton>
 
-      <Modal visible={visible} transparent animationType="none" onRequestClose={close}>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="none"
+        onRequestClose={close}
+      >
         <Animated.View
           style={{
             flex: 1,
             opacity: backdropAnim,
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: 0,
             right: 0,
@@ -104,10 +110,7 @@ export default function Menu({
 
           {LINKS.map((link) => (
             <MenuLink key={link.key} activeOpacity={0.6}>
-              <Link
-                href={`/${link.key}` as any}
-                onPress={close}
-              >
+              <Link href={`/${link.key}` as any} onPress={close}>
                 <MenuLinkText>{link.label}</MenuLinkText>
               </Link>
             </MenuLink>

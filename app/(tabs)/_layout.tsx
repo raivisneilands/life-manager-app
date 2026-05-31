@@ -1,6 +1,6 @@
-import { useTheme } from '@emotion/react';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { useTheme } from "@emotion/react";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 
 export default function TabLayout() {
   const theme = useTheme();
@@ -12,11 +12,11 @@ export default function TabLayout() {
 
         tabBarShowLabel: true, // 🔥 REQUIRED
         tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: '#888', // hardcode to test
+        tabBarInactiveTintColor: "#888", // hardcode to test
 
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: '500',
+          fontWeight: "500",
         },
 
         tabBarStyle: {
@@ -30,7 +30,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          tabBarLabel: 'Today',
+          tabBarLabel: "Today",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="home" size={20} color={color} />
           ),
@@ -39,7 +39,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="habits"
         options={{
-          tabBarLabel: 'Habits',
+          tabBarLabel: "Habits",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="calendar-today" size={20} color={color} />
           ),
@@ -48,7 +48,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="health"
         options={{
-          tabBarLabel: 'Health',
+          tabBarLabel: "Health",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="health-and-safety" size={20} color={color} />
           ),
@@ -57,7 +57,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="finance"
         options={{
-          tabBarLabel: 'Finance',
+          tabBarLabel: "Finance",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="wallet" size={20} color={color} />
           ),
@@ -66,7 +66,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="overview"
         options={{
-          tabBarLabel: 'Overview',
+          tabBarLabel: "Overview",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="show-chart" size={20} color={color} />
           ),
@@ -86,15 +86,10 @@ export default function TabLayout() {
           href: null,
         }}
       />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null,
-        }}
-      />
       <Tabs.Screen name="settings/index" options={{ href: null }} />
       <Tabs.Screen name="settings/privacy" options={{ href: null }} />
       <Tabs.Screen name="settings/terms" options={{ href: null }} />
+      <Tabs.Screen name="account" options={{ href: null }} />
     </Tabs>
   );
 }

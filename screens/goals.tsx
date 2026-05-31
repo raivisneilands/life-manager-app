@@ -1,8 +1,9 @@
-import { Goal } from '@/models/Goal';
-import { useGoalStore } from '@/store/GoalStore';
-import styled from '@emotion/native';
-import { MaterialIcons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import Container from "@/components/Container";
+import { Goal } from "@/models/Goal";
+import { useGoalStore } from "@/store/GoalStore";
+import styled from "@emotion/native";
+import { MaterialIcons } from "@expo/vector-icons";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -11,25 +12,18 @@ import {
   Platform,
   ScrollView,
   View,
-} from 'react-native';
+} from "react-native";
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
+const SCREEN_HEIGHT = Dimensions.get("window").height;
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.85;
 
 // ─── Styled Components ────────────────────────────────────────────────────────
-// (UNCHANGED — keeping your UI exactly as-is)
-
-const Container = styled.View(({ theme }) => ({
-  flex: 1,
-  backgroundColor: theme.background,
-}));
 
 const Header = styled.View(({ theme }) => ({
-  paddingHorizontal: 20,
-  paddingVertical: 24,
+  paddingBottom: 20,
   borderBottomWidth: 1,
   borderBottomColor: theme.border,
-  justifyContent: 'space-between',
+  justifyContent: "space-between",
 }));
 
 const HeaderText = styled.View(() => ({}));
@@ -37,7 +31,7 @@ const HeaderText = styled.View(() => ({}));
 const Title = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 28,
-  fontWeight: '700',
+  fontWeight: "700",
 }));
 
 const Subtitle = styled.Text(({ theme }) => ({
@@ -52,16 +46,16 @@ const AddButton = styled.TouchableOpacity(({ theme }) => ({
   paddingVertical: 8,
   paddingHorizontal: 14,
   marginTop: 16,
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
   gap: 6,
 }));
 
 const AddButtonText = styled.Text(() => ({
-  color: '#fff',
+  color: "#fff",
   fontSize: 14,
-  fontWeight: '600',
+  fontWeight: "600",
 }));
 
 const Section = styled.View(() => ({
@@ -73,9 +67,9 @@ const Section = styled.View(() => ({
 const SectionTitle = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 12,
-  fontWeight: '600',
+  fontWeight: "600",
   letterSpacing: 1,
-  textTransform: 'uppercase',
+  textTransform: "uppercase",
   marginBottom: 12,
 }));
 
@@ -89,15 +83,15 @@ const Card = styled.View(({ theme }) => ({
 }));
 
 const CardRow = styled.View(() => ({
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
 }));
 
 const CardTitle = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 16,
-  fontWeight: '600',
+  fontWeight: "600",
   flex: 1,
 }));
 
@@ -109,8 +103,8 @@ const CardSubtitle = styled.Text(({ theme }) => ({
 }));
 
 const CardActions = styled.View(() => ({
-  flexDirection: 'row',
-  justifyContent: 'flex-end',
+  flexDirection: "row",
+  justifyContent: "flex-end",
   gap: 12,
 }));
 
@@ -119,8 +113,8 @@ const ActionButton = styled.TouchableOpacity(() => ({
 }));
 
 const ProgressRow = styled.View(() => ({
-  flexDirection: 'row',
-  justifyContent: 'space-between',
+  flexDirection: "row",
+  justifyContent: "space-between",
   marginBottom: 4,
 }));
 
@@ -137,12 +131,14 @@ const ProgressBarTrack = styled.View(({ theme }) => ({
   marginBottom: 12,
 }));
 
-const ProgressBarFill = styled.View(({ theme, progress }: { theme?: any; progress: number }) => ({
-  height: 6,
-  backgroundColor: theme.primary,
-  borderRadius: 99,
-  width: `${Math.min(progress, 100)}%`,
-}));
+const ProgressBarFill = styled.View(
+  ({ theme, progress }: { theme?: any; progress: number }) => ({
+    height: 6,
+    backgroundColor: theme.primary,
+    borderRadius: 99,
+    width: `${Math.min(progress, 100)}%`,
+  }),
+);
 
 const Divider = styled.View(({ theme }) => ({
   height: 1,
@@ -153,15 +149,15 @@ const Divider = styled.View(({ theme }) => ({
 const PlanTitle = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 12,
-  fontWeight: '600',
+  fontWeight: "600",
   letterSpacing: 0.8,
-  textTransform: 'uppercase',
+  textTransform: "uppercase",
   marginBottom: 8,
 }));
 
 const PlanStepRow = styled.View(() => ({
-  flexDirection: 'row',
-  alignItems: 'center',
+  flexDirection: "row",
+  alignItems: "center",
   paddingVertical: 8,
   gap: 12,
 }));
@@ -171,17 +167,19 @@ const PlanStepDivider = styled.View(({ theme }) => ({
   backgroundColor: theme.border,
 }));
 
-const PlanStepName = styled.Text(({ theme, completed }: { theme?: any; completed: boolean }) => ({
-  color: completed ? theme.textSecondary : theme.textPrimary,
-  fontSize: 15,
-  fontWeight: '500',
-  flex: 1,
-  textDecorationLine: completed ? 'line-through' : 'none',
-}));
+const PlanStepName = styled.Text(
+  ({ theme, completed }: { theme?: any; completed: boolean }) => ({
+    color: completed ? theme.textSecondary : theme.textPrimary,
+    fontSize: 15,
+    fontWeight: "500",
+    flex: 1,
+    textDecorationLine: completed ? "line-through" : "none",
+  }),
+);
 
 const AddStepRow = styled.View(() => ({
-  flexDirection: 'row',
-  alignItems: 'center',
+  flexDirection: "row",
+  alignItems: "center",
   gap: 8,
   marginTop: 8,
 }));
@@ -207,21 +205,26 @@ const AddStepButton = styled.TouchableOpacity(({ theme }) => ({
 const EmptyText = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 14,
-  textAlign: 'center',
+  textAlign: "center",
   paddingVertical: 32,
 }));
 
 // ─── Sheet ────────────────────────────────────────────────────────────────────
 
 const Backdrop = styled.TouchableOpacity(() => ({
-  position: 'absolute',
-  top: 0, left: 0, right: 0, bottom: 0,
-  backgroundColor: 'rgba(0,0,0,0.5)',
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0,0,0,0.5)",
 }));
 
 const Sheet = styled(Animated.View)(({ theme }) => ({
-  position: 'absolute',
-  bottom: 0, left: 0, right: 0,
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  right: 0,
   height: SHEET_HEIGHT,
   backgroundColor: theme.background,
   borderTopLeftRadius: 20,
@@ -235,7 +238,7 @@ const Handle = styled.View(({ theme }) => ({
   height: 4,
   backgroundColor: theme.border,
   borderRadius: 99,
-  alignSelf: 'center',
+  alignSelf: "center",
   marginTop: 12,
   marginBottom: 20,
 }));
@@ -243,16 +246,16 @@ const Handle = styled.View(({ theme }) => ({
 const SheetTitle = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 20,
-  fontWeight: '700',
+  fontWeight: "700",
   marginBottom: 20,
 }));
 
 const Label = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 12,
-  fontWeight: '600',
+  fontWeight: "600",
   letterSpacing: 0.8,
-  textTransform: 'uppercase',
+  textTransform: "uppercase",
   marginBottom: 6,
   marginTop: 14,
 }));
@@ -269,7 +272,7 @@ const Input = styled.TextInput(({ theme }) => ({
 }));
 
 const InputRow = styled.View(() => ({
-  flexDirection: 'row',
+  flexDirection: "row",
   gap: 10,
 }));
 
@@ -278,7 +281,7 @@ const InputWrap = styled.View(() => ({
 }));
 
 const ButtonRow = styled.View(() => ({
-  flexDirection: 'row',
+  flexDirection: "row",
   gap: 12,
   marginTop: 24,
   marginBottom: 16,
@@ -290,13 +293,13 @@ const CancelButton = styled.TouchableOpacity(({ theme }) => ({
   borderRadius: 10,
   borderWidth: 1,
   borderColor: theme.border,
-  alignItems: 'center',
+  alignItems: "center",
 }));
 
 const CancelButtonText = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 15,
-  fontWeight: '600',
+  fontWeight: "600",
 }));
 
 const SaveButton = styled.TouchableOpacity(({ theme }) => ({
@@ -304,27 +307,27 @@ const SaveButton = styled.TouchableOpacity(({ theme }) => ({
   paddingVertical: 14,
   borderRadius: 10,
   backgroundColor: theme.primary,
-  alignItems: 'center',
+  alignItems: "center",
 }));
 
 const SaveButtonText = styled.Text(() => ({
-  color: '#fff',
+  color: "#fff",
   fontSize: 15,
-  fontWeight: '600',
+  fontWeight: "600",
 }));
 
 const ConfirmBackdrop = styled.TouchableOpacity(() => ({
-  position: 'absolute',
+  position: "absolute",
   top: 0,
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(0,0,0,0.5)',
+  backgroundColor: "rgba(0,0,0,0.5)",
 }));
 
 const ConfirmBox = styled.View(({ theme }) => ({
-  position: 'absolute',
-  top: '40%',
+  position: "absolute",
+  top: "40%",
   left: 24,
   right: 24,
   backgroundColor: theme.card,
@@ -337,7 +340,7 @@ const ConfirmBox = styled.View(({ theme }) => ({
 const ConfirmTitle = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 18,
-  fontWeight: '700',
+  fontWeight: "700",
   marginBottom: 8,
 }));
 
@@ -349,7 +352,7 @@ const ConfirmMessage = styled.Text(({ theme }) => ({
 }));
 
 const ConfirmButtonRow = styled.View(() => ({
-  flexDirection: 'row',
+  flexDirection: "row",
   gap: 12,
 }));
 
@@ -358,13 +361,13 @@ const ConfirmDeleteButton = styled.TouchableOpacity(({ theme }) => ({
   paddingVertical: 14,
   borderRadius: 10,
   backgroundColor: theme.danger,
-  alignItems: 'center',
+  alignItems: "center",
 }));
 
 const ConfirmDeleteButtonText = styled.Text(() => ({
-  color: '#fff',
+  color: "#fff",
   fontSize: 15,
-  fontWeight: '600',
+  fontWeight: "600",
 }));
 
 const GoalTypeButton = styled.TouchableOpacity(({ theme }) => ({
@@ -382,7 +385,7 @@ const GoalTypeText = styled.Text(({ theme }) => ({
 const GoalTypeOption = styled.TouchableOpacity<{ selected: boolean }>(
   ({ theme, selected }) => ({
     backgroundColor: selected
-      ? theme.primary + '33' // ~20% opacity
+      ? theme.primary + "33" // ~20% opacity
       : theme.surface,
     borderWidth: 1,
     borderColor: selected ? theme.primary : theme.border,
@@ -390,7 +393,7 @@ const GoalTypeOption = styled.TouchableOpacity<{ selected: boolean }>(
     paddingVertical: 12,
     paddingHorizontal: 14,
     marginTop: 8,
-  })
+  }),
 );
 
 const GoalTypeOptionText = styled.Text(({ theme }) => ({
@@ -410,12 +413,12 @@ type FormState = {
 };
 
 const EMPTY_FORM: FormState = {
-  title: '',
-  deadline: '',
-  goalType: 'max',
-  currentValue: '0',
-  targetValue: '',
-  unit: '',
+  title: "",
+  deadline: "",
+  goalType: "max",
+  currentValue: "0",
+  targetValue: "",
+  unit: "",
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -508,7 +511,7 @@ export default function GoalsScreen() {
       updateGoal({ ...editingGoal, ...payload });
     } else {
       addGoal({
-        id: 'goal-' + Math.random().toString(36).substr(2, 9),
+        id: "goal-" + Math.random().toString(36).substr(2, 9),
         planSteps: [],
         ...payload,
       });
@@ -522,12 +525,12 @@ export default function GoalsScreen() {
     if (!text) return;
 
     addPlanStep(goalId, {
-      id: 'step-' + Math.random().toString(36).substr(2, 9),
+      id: "step-" + Math.random().toString(36).substr(2, 9),
       title: text,
       completed: false,
     });
 
-    setNewStepText((prev) => ({ ...prev, [goalId]: '' }));
+    setNewStepText((prev) => ({ ...prev, [goalId]: "" }));
   }
 
   return (
@@ -536,7 +539,9 @@ export default function GoalsScreen() {
         <Header>
           <HeaderText>
             <Title>Goals</Title>
-            <Subtitle>Define what you want and build a plan to get there</Subtitle>
+            <Subtitle>
+              Define what you want and build a plan to get there
+            </Subtitle>
           </HeaderText>
 
           <AddButton onPress={() => openSheet()} activeOpacity={0.7}>
@@ -569,7 +574,11 @@ export default function GoalsScreen() {
                       <MaterialIcons name="edit" size={18} color="#888" />
                     </ActionButton>
                     <ActionButton onPress={() => setConfirmId(goal.id)}>
-                      <MaterialIcons name="delete-outline" size={18} color="#EF4444" />
+                      <MaterialIcons
+                        name="delete-outline"
+                        size={18}
+                        color="#EF4444"
+                      />
                     </ActionButton>
                   </CardActions>
                 </CardRow>
@@ -597,11 +606,17 @@ export default function GoalsScreen() {
                   <React.Fragment key={step.id}>
                     {index > 0 && <PlanStepDivider />}
                     <PlanStepRow>
-                      <ActionButton onPress={() => togglePlanStep(goal.id, step.id)}>
+                      <ActionButton
+                        onPress={() => togglePlanStep(goal.id, step.id)}
+                      >
                         <MaterialIcons
-                          name={step.completed ? 'check-circle' : 'check-circle-outline'}
+                          name={
+                            step.completed
+                              ? "check-circle"
+                              : "check-circle-outline"
+                          }
                           size={20}
-                          color={step.completed ? '#22C55E' : '#888'}
+                          color={step.completed ? "#22C55E" : "#888"}
                         />
                       </ActionButton>
 
@@ -609,7 +624,9 @@ export default function GoalsScreen() {
                         {step.title}
                       </PlanStepName>
 
-                      <ActionButton onPress={() => removePlanStep(goal.id, step.id)}>
+                      <ActionButton
+                        onPress={() => removePlanStep(goal.id, step.id)}
+                      >
                         <MaterialIcons name="close" size={16} color="#888" />
                       </ActionButton>
                     </PlanStepRow>
@@ -619,7 +636,7 @@ export default function GoalsScreen() {
                 <AddStepRow>
                   <AddStepInput
                     placeholder="Add a plan step…"
-                    value={newStepText[goal.id] ?? ''}
+                    value={newStepText[goal.id] ?? ""}
                     onChangeText={(val) =>
                       setNewStepText((prev) => ({ ...prev, [goal.id]: val }))
                     }
@@ -636,53 +653,71 @@ export default function GoalsScreen() {
       </ScrollView>
 
       {/* Sheet UI remains unchanged visually */}
-      <Modal visible={sheetVisible} transparent animationType="none" onRequestClose={closeSheet}>
+      <Modal
+        visible={sheetVisible}
+        transparent
+        animationType="none"
+        onRequestClose={closeSheet}
+      >
         <Backdrop onPress={closeSheet} />
         <Sheet style={{ transform: [{ translateY: slideAnim }] }}>
           <Handle />
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+          >
             <ScrollView showsVerticalScrollIndicator={false}>
-              <SheetTitle>{editingGoal ? 'Edit Goal' : 'New Goal'}</SheetTitle>
+              <SheetTitle>{editingGoal ? "Edit Goal" : "New Goal"}</SheetTitle>
 
               <Label>Title *</Label>
-              <Input value={form.title} onChangeText={(v) => setForm(f => ({ ...f, title: v }))} />
+              <Input
+                value={form.title}
+                onChangeText={(v) => setForm((f) => ({ ...f, title: v }))}
+              />
 
               <Label>Deadline</Label>
-              <Input value={form.deadline} onChangeText={(v) => setForm(f => ({ ...f, deadline: v }))} />
+              <Input
+                value={form.deadline}
+                onChangeText={(v) => setForm((f) => ({ ...f, deadline: v }))}
+              />
 
               <Label>Goal type</Label>
 
-              <GoalTypeButton onPress={() => setShowGoalTypePicker(v => !v)}>
+              <GoalTypeButton onPress={() => setShowGoalTypePicker((v) => !v)}>
                 <GoalTypeText>
-                  {form.goalType === 'min'
-                    ? 'Minimize (lower is better)'
-                    : 'Maximize (higher is better)'}
+                  {form.goalType === "min"
+                    ? "Minimize (lower is better)"
+                    : "Maximize (higher is better)"}
                 </GoalTypeText>
               </GoalTypeButton>
 
               {showGoalTypePicker && (
                 <View style={{ marginTop: 8 }}>
-                  {form.goalType !== 'max' && (
+                  {form.goalType !== "max" && (
                     <GoalTypeOption
                       selected={false}
                       onPress={() => {
-                        setForm(f => ({ ...f, goalType: 'max' }));
+                        setForm((f) => ({ ...f, goalType: "max" }));
                         setShowGoalTypePicker(false);
                       }}
                     >
-                      <GoalTypeOptionText>Maximize (higher is better)</GoalTypeOptionText>
+                      <GoalTypeOptionText>
+                        Maximize (higher is better)
+                      </GoalTypeOptionText>
                     </GoalTypeOption>
                   )}
 
-                  {form.goalType !== 'min' && (
+                  {form.goalType !== "min" && (
                     <GoalTypeOption
                       selected={false}
                       onPress={() => {
-                        setForm(f => ({ ...f, goalType: 'min' }));
+                        setForm((f) => ({ ...f, goalType: "min" }));
                         setShowGoalTypePicker(false);
                       }}
                     >
-                      <GoalTypeOptionText>Minimize (lower is better)</GoalTypeOptionText>
+                      <GoalTypeOptionText>
+                        Minimize (lower is better)
+                      </GoalTypeOptionText>
                     </GoalTypeOption>
                   )}
                 </View>
@@ -692,17 +727,30 @@ export default function GoalsScreen() {
               <InputRow>
                 <InputWrap>
                   <Label>Current</Label>
-                  <Input value={form.currentValue} onChangeText={(v) => setForm(f => ({ ...f, currentValue: v }))} />
+                  <Input
+                    value={form.currentValue}
+                    onChangeText={(v) =>
+                      setForm((f) => ({ ...f, currentValue: v }))
+                    }
+                  />
                 </InputWrap>
 
                 <InputWrap>
                   <Label>Target</Label>
-                  <Input value={form.targetValue} onChangeText={(v) => setForm(f => ({ ...f, targetValue: v }))} />
+                  <Input
+                    value={form.targetValue}
+                    onChangeText={(v) =>
+                      setForm((f) => ({ ...f, targetValue: v }))
+                    }
+                  />
                 </InputWrap>
 
                 <InputWrap>
                   <Label>Unit</Label>
-                  <Input value={form.unit} onChangeText={(v) => setForm(f => ({ ...f, unit: v }))} />
+                  <Input
+                    value={form.unit}
+                    onChangeText={(v) => setForm((f) => ({ ...f, unit: v }))}
+                  />
                 </InputWrap>
               </InputRow>
 
@@ -720,21 +768,39 @@ export default function GoalsScreen() {
         </Sheet>
       </Modal>
 
-      {/* Confirm delete */} 
-      <Modal visible={!!confirmId} transparent animationType="fade" onRequestClose={() => setConfirmId(null)}>
+      {/* Confirm delete */}
+      <Modal
+        visible={!!confirmId}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmId(null)}
+      >
         <ConfirmBackdrop onPress={() => setConfirmId(null)} activeOpacity={1} />
         <ConfirmBox>
           <ConfirmTitle>Delete Goal</ConfirmTitle>
-          <ConfirmMessage> Are you sure you want to delete this goal and all its plan steps? This cannot be undone. </ConfirmMessage>
-          <ConfirmButtonRow> 
-            <CancelButton onPress={() => setConfirmId(null)} activeOpacity={0.7}>
+          <ConfirmMessage>
+            {" "}
+            Are you sure you want to delete this goal and all its plan steps?
+            This cannot be undone.{" "}
+          </ConfirmMessage>
+          <ConfirmButtonRow>
+            <CancelButton
+              onPress={() => setConfirmId(null)}
+              activeOpacity={0.7}
+            >
               <CancelButtonText>Cancel</CancelButtonText>
             </CancelButton>
-            <ConfirmDeleteButton onPress={() => { if (confirmId) removeGoal(confirmId); setConfirmId(null); }} activeOpacity={0.7} >
-              <ConfirmDeleteButtonText>Delete</ConfirmDeleteButtonText> 
-            </ConfirmDeleteButton> 
-          </ConfirmButtonRow> 
-        </ConfirmBox> 
+            <ConfirmDeleteButton
+              onPress={() => {
+                if (confirmId) removeGoal(confirmId);
+                setConfirmId(null);
+              }}
+              activeOpacity={0.7}
+            >
+              <ConfirmDeleteButtonText>Delete</ConfirmDeleteButtonText>
+            </ConfirmDeleteButton>
+          </ConfirmButtonRow>
+        </ConfirmBox>
       </Modal>
 
       {/* Confirm delete stays same (omitted for brevity) */}

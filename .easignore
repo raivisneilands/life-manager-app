@@ -51,3 +51,6 @@ app-example
 
 # Ignore test coverage reports
 /coverage
+
+# env file
+.env

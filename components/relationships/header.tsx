@@ -4,13 +4,13 @@ const StyledHeader = styled.View(({ theme }) => ({
   paddingBottom: 8,
   borderBottomWidth: 1,
   borderBottomColor: theme.border,
-  marginBottom: 32,
+  marginBottom: 16,
 }));
 
 const Title = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 28,
-  fontWeight: '700',
+  fontWeight: "700",
 }));
 
 const Subtitle = styled.Text(({ theme }) => ({
@@ -25,5 +25,5 @@ export default function Header() {
       <Title>Relationships</Title>
       <Subtitle>Stay connected with the people that matter</Subtitle>
     </StyledHeader>
-  )
+  );
 }

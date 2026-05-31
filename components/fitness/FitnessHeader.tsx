@@ -1,12 +1,11 @@
-import styled from '@emotion/native';
-import { MaterialIcons } from '@expo/vector-icons';
+import styled from "@emotion/native";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const HeaderContainer = styled.View(({ theme }) => ({
-  paddingHorizontal: 20,
-  paddingVertical: 24,
+  paddingBottom: 20,
   borderBottomWidth: 1,
   borderBottomColor: theme.border,
-  justifyContent: 'space-between',
+  justifyContent: "space-between",
 }));
 
 const HeaderText = styled.View(() => ({}));
@@ -14,7 +13,7 @@ const HeaderText = styled.View(() => ({}));
 const Title = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 28,
-  fontWeight: '700',
+  fontWeight: "700",
 }));
 
 const Subtitle = styled.Text(({ theme }) => ({
@@ -29,16 +28,16 @@ const AddButton = styled.TouchableOpacity(({ theme }) => ({
   paddingVertical: 8,
   paddingHorizontal: 14,
   marginTop: 16,
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
   gap: 6,
 }));
 
 const AddButtonText = styled.Text(() => ({
-  color: '#fff',
+  color: "#fff",
   fontSize: 14,
-  fontWeight: '600',
+  fontWeight: "600",
 }));
 
 type Props = {

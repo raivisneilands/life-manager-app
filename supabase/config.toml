@@ -417,3 +417,25 @@ entrypoint = "./functions/delete-account/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/delete-account/*.html" ]
+
+[functions.ai-insight]
+enabled = true
+verify_jwt = false
+import_map = "./functions/ai-insight/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/ai-insight/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/ai-insight/*.html" ]
+
+[functions.ai-goal-plan]
+enabled = true
+verify_jwt = false
+import_map = "./functions/ai-goal-plan/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/ai-goal-plan/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/ai-goal-plan/*.html" ]

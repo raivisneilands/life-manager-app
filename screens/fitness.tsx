@@ -1,4 +1,5 @@
 import Container from "@/components/Container";
+import { InsightCard } from "@/components/InsightCard";
 import ConfirmDeleteModal from "@/components/fitness/ConfirmDeleteModal";
 import FitnessHeader from "@/components/fitness/FitnessHeader";
 import WorkoutCard from "@/components/fitness/WorkoutCard";
@@ -182,6 +183,8 @@ export default function FitnessScreen() {
     <Container>
       <ScrollView showsVerticalScrollIndicator={false}>
         <FitnessHeader onAdd={() => openSheet()} />
+
+        <InsightCard screen="fitness" />
 
         <Section>
           <SectionTitle>This Week</SectionTitle>

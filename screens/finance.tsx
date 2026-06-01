@@ -1,17 +1,18 @@
-import Container from '@/components/Container';
-import Title from '@/components/Title';
-import { FinanceEntry } from '@/models/FinanceEntry';
-import { useFinanceStore } from '@/store/FinanceStore';
-import styled from '@emotion/native';
-import { EvilIcons } from '@expo/vector-icons';
-import * as Crypto from 'expo-crypto';
-import { useEffect, useState } from 'react';
+import Container from "@/components/Container";
+import { InsightCard } from "@/components/InsightCard";
+import Title from "@/components/Title";
+import { FinanceEntry } from "@/models/FinanceEntry";
+import { useFinanceStore } from "@/store/FinanceStore";
+import styled from "@emotion/native";
+import { EvilIcons } from "@expo/vector-icons";
+import * as Crypto from "expo-crypto";
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
-} from 'react-native';
+} from "react-native";
 
 // ---------- styled ----------
 const Card = styled.View(({ theme }) => ({
@@ -21,7 +22,7 @@ const Card = styled.View(({ theme }) => ({
   marginBottom: 20,
   borderWidth: 1,
   borderColor: theme.border,
-  shadowColor: '#000',
+  shadowColor: "#000",
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.1,
   shadowRadius: 4,
@@ -29,19 +30,19 @@ const Card = styled.View(({ theme }) => ({
 }));
 
 const Row = styled.View({
-  flexDirection: 'row',
-  justifyContent: 'space-between',
+  flexDirection: "row",
+  justifyContent: "space-between",
   marginBottom: 6,
 });
 
 const Label = styled.Text(({ theme }) => ({
-  fontWeight: 'bold',
+  fontWeight: "bold",
   color: theme.textPrimary,
 }));
 
 const Value = styled.Text<{ positive?: boolean }>(({ positive, theme }) => ({
   color: positive ? theme.success : theme.danger,
-  fontWeight: 'bold',
+  fontWeight: "bold",
 }));
 
 const FormRow = styled.View({ marginBottom: 12 });
@@ -55,7 +56,7 @@ const Input = styled.TextInput(({ theme }) => ({
   backgroundColor: theme.surface,
 }));
 
-const TypeSwitch = styled.View({ flexDirection: 'row', marginBottom: 12 });
+const TypeSwitch = styled.View({ flexDirection: "row", marginBottom: 12 });
 
 const TypeButton = styled.TouchableOpacity<{ active?: boolean }>(
   ({ active, theme }) => ({
@@ -68,22 +69,22 @@ const TypeButton = styled.TouchableOpacity<{ active?: boolean }>(
 );
 
 const TypeText = styled.Text<{ active?: boolean }>(({ active, theme }) => ({
-  textAlign: 'center',
-  fontWeight: 'bold',
-  color: active ? '#ffffff' : theme.textSecondary,
+  textAlign: "center",
+  fontWeight: "bold",
+  color: active ? "#ffffff" : theme.textSecondary,
 }));
 
 const AddButton = styled.TouchableOpacity(({ theme }) => ({
   backgroundColor: theme.primary,
   padding: 14,
   borderRadius: 12,
-  alignItems: 'center',
+  alignItems: "center",
   marginTop: 10,
 }));
 
 const AddButtonText = styled.Text(({ theme }) => ({
-  color: '#ffffff',
-  fontWeight: 'bold',
+  color: "#ffffff",
+  fontWeight: "bold",
 }));
 
 const EntryCard = styled.TouchableOpacity(({ theme }) => ({
@@ -96,7 +97,7 @@ const EntryCard = styled.TouchableOpacity(({ theme }) => ({
 }));
 
 const EntryTitle = styled.Text(({ theme }) => ({
-  fontWeight: 'bold',
+  fontWeight: "bold",
   color: theme.textPrimary,
 }));
 
@@ -107,20 +108,20 @@ const EntryMeta = styled.Text(({ theme }) => ({
 
 const ModalContainer = styled.View({
   flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.5)',
-  justifyContent: 'center',
-  alignItems: 'center',
+  backgroundColor: "rgba(0,0,0,0.5)",
+  justifyContent: "center",
+  alignItems: "center",
 });
 
 const ModalContent = styled.View(({ theme }) => ({
-  width: '90%',
+  width: "90%",
   backgroundColor: theme.card,
   borderRadius: 16,
   padding: 20,
 }));
 
 const CloseButton = styled.TouchableOpacity({
-  alignSelf: 'flex-end',
+  alignSelf: "flex-end",
   marginBottom: 10,
 });
 
@@ -129,18 +130,18 @@ const MonthButton = styled.TouchableOpacity(({ theme }) => ({
   backgroundColor: theme.primary,
   borderRadius: 10,
   marginBottom: 12,
-  alignItems: 'center',
+  alignItems: "center",
 }));
 
 const MonthButtonText = styled.Text({
-  color: '#ffffff',
-  fontWeight: 'bold',
+  color: "#ffffff",
+  fontWeight: "bold",
 });
 
 const MonthNav = styled.View({
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
   marginBottom: 12,
 });
 
@@ -151,14 +152,14 @@ const MonthNavButton = styled.TouchableOpacity(({ theme }) => ({
 }));
 
 const MonthNavText = styled.Text(({ theme }) => ({
-  color: '#ffffff',
-  fontWeight: 'bold',
+  color: "#ffffff",
+  fontWeight: "bold",
   fontSize: 14,
 }));
 
 const StyledText = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
-  fontWeight: 'bold',
+  fontWeight: "bold",
   fontSize: 14,
 }));
 
@@ -169,10 +170,10 @@ export default function FinancePage() {
   const addEntry = useFinanceStore((s) => s.addEntry);
   const removeEntry = useFinanceStore((s) => s.removeEntry);
 
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<'income' | 'expense'>('expense');
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState("");
+  const [type, setType] = useState<"income" | "expense">("expense");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -183,10 +184,10 @@ export default function FinancePage() {
   }, []);
 
   const totalIncome = entries
-    .filter((e) => e.type === 'income')
+    .filter((e) => e.type === "income")
     .reduce((sum, e) => sum + e.amount, 0);
   const totalExpense = entries
-    .filter((e) => e.type === 'expense')
+    .filter((e) => e.type === "expense")
     .reduce((sum, e) => sum + e.amount, 0);
   const balance = totalIncome - totalExpense;
 
@@ -203,13 +204,13 @@ export default function FinancePage() {
       type,
       category,
       description: description || undefined,
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split("T")[0],
     };
 
     addEntry(entry);
-    setAmount('');
-    setCategory('');
-    setDescription('');
+    setAmount("");
+    setCategory("");
+    setDescription("");
   };
 
   const monthEntries = entries.filter((e) => {
@@ -221,23 +222,25 @@ export default function FinancePage() {
   });
 
   const monthIncome = monthEntries
-    .filter((e) => e.type === 'income')
+    .filter((e) => e.type === "income")
     .reduce((sum, e) => sum + e.amount, 0);
   const monthExpense = monthEntries
-    .filter((e) => e.type === 'expense')
+    .filter((e) => e.type === "expense")
     .reduce((sum, e) => sum + e.amount, 0);
   const monthBalance = monthIncome - monthExpense;
 
   const formatMonth = (date: Date) =>
-    date.toLocaleString('default', { month: 'long', year: 'numeric' });
+    date.toLocaleString("default", { month: "long", year: "numeric" });
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={{ flex: 1 }}
     >
       <Container>
         <Title>Finance</Title>
+
+        <InsightCard screen="finance" />
 
         {/* Summary */}
         <Card>
@@ -267,16 +270,16 @@ export default function FinancePage() {
           <Card>
             <TypeSwitch>
               <TypeButton
-                active={type === 'expense'}
-                onPress={() => setType('expense')}
+                active={type === "expense"}
+                onPress={() => setType("expense")}
               >
-                <TypeText active={type === 'expense'}>Expense</TypeText>
+                <TypeText active={type === "expense"}>Expense</TypeText>
               </TypeButton>
               <TypeButton
-                active={type === 'income'}
-                onPress={() => setType('income')}
+                active={type === "income"}
+                onPress={() => setType("income")}
               >
-                <TypeText active={type === 'income'}>Income</TypeText>
+                <TypeText active={type === "income"}>Income</TypeText>
               </TypeButton>
             </TypeSwitch>
 
@@ -323,8 +326,8 @@ export default function FinancePage() {
               >
                 <Row>
                   <EntryTitle>{entry.category}</EntryTitle>
-                  <Value positive={entry.type === 'income'}>
-                    {entry.type === 'income' ? '+' : '-'}€{entry.amount}
+                  <Value positive={entry.type === "income"}>
+                    {entry.type === "income" ? "+" : "-"}€{entry.amount}
                   </Value>
                 </Row>
                 <EntryMeta>{entry.date}</EntryMeta>
@@ -352,7 +355,7 @@ export default function FinancePage() {
           <ModalContainer>
             <ModalContent>
               <CloseButton onPress={() => setModalVisible(false)}>
-                <StyledText style={{ fontWeight: 'bold', fontSize: 16 }}>
+                <StyledText style={{ fontWeight: "bold", fontSize: 16 }}>
                   Close
                 </StyledText>
               </CloseButton>
@@ -374,7 +377,7 @@ export default function FinancePage() {
 
                 <StyledText
                   style={{
-                    fontWeight: 'bold',
+                    fontWeight: "bold",
                     fontSize: 16,
                   }}
                 >
@@ -416,8 +419,8 @@ export default function FinancePage() {
                   <EntryCard key={entry.id}>
                     <Row>
                       <EntryTitle>{entry.category}</EntryTitle>
-                      <Value positive={entry.type === 'income'}>
-                        {entry.type === 'income' ? '+' : '-'}€{entry.amount}
+                      <Value positive={entry.type === "income"}>
+                        {entry.type === "income" ? "+" : "-"}€{entry.amount}
                       </Value>
                     </Row>
                     <EntryMeta>{entry.date}</EntryMeta>

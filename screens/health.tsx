@@ -1,6 +1,7 @@
 import Container from "@/components/Container";
 import HealthEntryList from "@/components/health/HealthEntryList";
 import HealthForm from "@/components/health/HealthForm";
+import { InsightCard } from "@/components/InsightCard";
 import Title from "@/components/Title";
 import { useHealthStore } from "@/store/HealthStore";
 import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
@@ -16,6 +17,7 @@ export default function HealthPage() {
       style={{ flex: 1 }}
     >
       <Container>
+        <InsightCard screen="health" />
         <Title>Health Journal</Title>
         <ScrollView showsVerticalScrollIndicator={false}>
           <HealthForm onAdd={addEntry} />

@@ -1,10 +1,14 @@
 import Container from "@/components/Container";
-import { Goal } from "@/models/Goal";
+import { InsightCard } from "@/components/InsightCard";
+import { Goal, PlanStep } from "@/models/Goal";
 import { useGoalStore } from "@/store/GoalStore";
+import { generateGoalPlan } from "@/utils/ai";
+import { supabase } from "@/utils/supabase";
 import styled from "@emotion/native";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   KeyboardAvoidingView,
@@ -401,6 +405,26 @@ const GoalTypeOptionText = styled.Text(({ theme }) => ({
   fontSize: 14,
 }));
 
+const GenerateAIButton = styled.TouchableOpacity(({ theme }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  backgroundColor: theme.primary + "22",
+  borderWidth: 1,
+  borderColor: theme.primary + "55",
+  borderRadius: 10,
+  paddingVertical: 10,
+  paddingHorizontal: 14,
+  marginBottom: 12,
+}));
+
+const GenerateAIButtonText = styled.Text(({ theme }) => ({
+  color: theme.primary,
+  fontSize: 14,
+  fontWeight: "600",
+}));
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormState = {
@@ -433,6 +457,7 @@ export default function GoalsScreen() {
   const removePlanStep = useGoalStore((s) => s.removePlanStep);
   const togglePlanStep = useGoalStore((s) => s.togglePlanStep);
   const [showGoalTypePicker, setShowGoalTypePicker] = useState(false);
+  const [generatingGoalId, setGeneratingGoalId] = useState<string | null>(null);
 
   const [sheetVisible, setSheetVisible] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -445,17 +470,54 @@ export default function GoalsScreen() {
     getGoals();
   }, []);
 
-  function getProgress({ current, target, goalType }: any) {
-    const c = Number(current);
-    const t = Number(target);
+  async function handleGeneratePlan(goal: Goal) {
+    try {
+      setGeneratingGoalId(goal.id);
 
-    if (!c || !t) return 0;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    if (goalType === "min") {
-      return Math.min(100, (t / c) * 100);
+      if (!session) return;
+
+      const steps = await generateGoalPlan(goal, session.access_token);
+
+      const newSteps: PlanStep[] = steps.map((title: string) => ({
+        id: "step-" + Math.random().toString(36).substr(2, 9),
+        title,
+        completed: false,
+      }));
+
+      await useGoalStore.getState().setPlanSteps(goal.id, newSteps);
+    } catch (err) {
+      console.error("Failed to generate plan:", err);
+    } finally {
+      setGeneratingGoalId(null);
+    }
+  }
+
+  function getProgress({
+    current,
+    target,
+    goalType,
+  }: {
+    current: number;
+    target: number;
+    goalType: "min" | "max";
+  }) {
+    if (!current || !target) return 0;
+
+    // MAX goals: higher is better (e.g. earn money, lift weight)
+    if (goalType === "max") {
+      return Math.min(100, (current / target) * 100);
     }
 
-    return Math.min(100, (c / t) * 100);
+    // MIN goals: lower is better (e.g. run time, weight, sleep debt)
+    if (goalType === "min") {
+      return Math.min(100, (target / current) * 100);
+    }
+
+    return 0;
   }
 
   function openSheet(goal?: Goal) {
@@ -550,6 +612,8 @@ export default function GoalsScreen() {
           </AddButton>
         </Header>
 
+        <InsightCard screen="goals" />
+
         <Section>
           <SectionTitle>Active Goals</SectionTitle>
 
@@ -601,6 +665,31 @@ export default function GoalsScreen() {
                 <Divider />
 
                 <PlanTitle>Plan</PlanTitle>
+
+                <GenerateAIButton
+                  disabled={generatingGoalId === goal.id}
+                  onPress={() => handleGeneratePlan(goal)}
+                >
+                  {generatingGoalId === goal.id ? (
+                    <>
+                      <ActivityIndicator size="small" color="#8B5CF6" />
+                      <GenerateAIButtonText>Generating...</GenerateAIButtonText>
+                    </>
+                  ) : (
+                    <>
+                      <MaterialIcons
+                        name="auto-awesome"
+                        size={18}
+                        color="#8B5CF6"
+                      />
+                      <GenerateAIButtonText>
+                        {goal.planSteps.length === 0
+                          ? "Generate with AI"
+                          : "Regenerate Plan"}
+                      </GenerateAIButtonText>
+                    </>
+                  )}
+                </GenerateAIButton>
 
                 {goal.planSteps.map((step, index) => (
                   <React.Fragment key={step.id}>

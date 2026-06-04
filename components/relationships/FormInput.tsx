@@ -1,12 +1,12 @@
-import styled from '@emotion/native';
-import { TextInputProps } from 'react-native';
+import styled from "@emotion/native";
+import { TextInputProps } from "react-native";
 
 const Label = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 12,
-  fontWeight: '600',
+  fontWeight: "600",
   letterSpacing: 0.8,
-  textTransform: 'uppercase',
+  textTransform: "uppercase",
   marginBottom: 6,
   marginTop: 14,
 }));
@@ -24,9 +24,9 @@ const Input = styled.TextInput(({ theme }) => ({
 type Props = {
   label: string;
   onChangeText: (text: string) => void;
-} & TextInputProps
+} & TextInputProps;
 
-export default function FormInput({ label, onChangeText, ...props}: Props ) {
+export default function FormInput({ label, onChangeText, ...props }: Props) {
   return (
     <>
       <Label>{label}</Label>

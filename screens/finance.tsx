@@ -238,10 +238,9 @@ export default function FinancePage() {
       style={{ flex: 1 }}
     >
       <Container>
-        <Title>Finance</Title>
-
         <InsightCard screen="finance" />
 
+        <Title>Finance</Title>
         {/* Summary */}
         <Card>
           <Row>

@@ -69,6 +69,7 @@ type Props = {
   close: () => void;
   slideAnim: Animated.Value;
   backdropAnim: Animated.Value;
+  canGoBack?: boolean;
 };
 
 export default function Menu({

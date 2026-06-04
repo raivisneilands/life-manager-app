@@ -1,14 +1,23 @@
 import styled from "@emotion/native";
-import { useRef, useState } from "react";
-import { Animated, Dimensions, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Dimensions } from "react-native";
+import { BackButton } from "./BackButton";
 import Menu from "./Menu";
 
 const DRAWER_WIDTH = Dimensions.get("window").width * 0.55;
 
-const Row = styled(TouchableOpacity)`
+const Row = styled.View(({ theme }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  height: 56,
+  backgroundColor: theme.background,
+}));
+
+const Left = styled.View`
   flex-direction: row;
   align-items: center;
-  height: 56px;
 `;
 
 const Title = styled.Text(({ theme }) => ({
@@ -21,14 +30,19 @@ const Title = styled.Text(({ theme }) => ({
 }));
 
 export default function AppHeader() {
-  const [visible, setVisible] = useState(false);
+  const router = useRouter();
+  const [canGoBack, setCanGoBack] = useState(false);
 
+  useEffect(() => {
+    setCanGoBack(router.canGoBack());
+  }, []);
+
+  const [visible, setVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
 
   function open() {
     setVisible(true);
-
     Animated.parallel([
       Animated.spring(slideAnim, {
         toValue: 0,
@@ -59,16 +73,18 @@ export default function AppHeader() {
   }
 
   return (
-    <Row activeOpacity={0.9} onPress={open}>
-      <Menu
-        visible={visible}
-        open={open}
-        close={close}
-        slideAnim={slideAnim}
-        backdropAnim={backdropAnim}
-      />
-
-      <Title>Life Manager</Title>
+    <Row>
+      <Left>
+        <Menu
+          visible={visible}
+          open={open}
+          close={close}
+          slideAnim={slideAnim}
+          backdropAnim={backdropAnim}
+        />
+        <Title>Life Manager</Title>
+      </Left>
+      {canGoBack && <BackButton onPress={() => router.back()} />}
     </Row>
   );
 }

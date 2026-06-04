@@ -1,18 +1,18 @@
-import FormInput from '@/components/relationships/FormInput';
-import RelationshipTypeSelector from '@/components/relationships/RelationshipTypeSelector';
-import styled from '@emotion/native';
-import { Dispatch, SetStateAction } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import FormInput from "@/components/relationships/FormInput";
+import RelationshipTypeSelector from "@/components/relationships/RelationshipTypeSelector";
+import styled from "@emotion/native";
+import { Dispatch, SetStateAction } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 
 const SheetTitle = styled.Text(({ theme }) => ({
   color: theme.textPrimary,
   fontSize: 20,
-  fontWeight: '700',
+  fontWeight: "700",
   marginBottom: 20,
 }));
 
 const ButtonRow = styled.View({
-  flexDirection: 'row',
+  flexDirection: "row",
   gap: 12,
   marginTop: 24,
 });
@@ -23,12 +23,12 @@ const CancelButton = styled.TouchableOpacity(({ theme }) => ({
   borderRadius: 10,
   borderWidth: 1,
   borderColor: theme.border,
-  alignItems: 'center',
+  alignItems: "center",
 }));
 
 const CancelButtonText = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
-  fontWeight: '600',
+  fontWeight: "600",
 }));
 
 const SubmitButton = styled.TouchableOpacity(({ theme }) => ({
@@ -36,12 +36,12 @@ const SubmitButton = styled.TouchableOpacity(({ theme }) => ({
   paddingVertical: 14,
   borderRadius: 10,
   backgroundColor: theme.primary,
-  alignItems: 'center',
+  alignItems: "center",
 }));
 
 const SubmitButtonText = styled.Text({
-  color: '#fff',
-  fontWeight: '600',
+  color: "#fff",
+  fontWeight: "600",
 });
 
 type FormState = {
@@ -51,7 +51,7 @@ type FormState = {
   birthday: string;
   howWeMet: string;
   type: string;
-}
+};
 
 type Props = {
   form: FormState;
@@ -68,7 +68,7 @@ export default function RelationshipForm({
 }: Props) {
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -86,7 +86,7 @@ export default function RelationshipForm({
           onChange={(type: string) =>
             setForm((f) => ({
               ...f,
-              type: f.type === type ? '' : type,
+              type: f.type === type ? "" : type,
             }))
           }
         />

@@ -56,9 +56,6 @@ async function callEdgeFunction(
   context: string,
   userJwt: string
 ): Promise<string> {
-    console.log("SUPABASE_URL:", SUPABASE_URL);
-console.log("SUPABASE_ANON_KEY:", SUPABASE_ANON_KEY);
-console.log("userJwt:", userJwt);
   const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-insight`, {
     method: "POST",
     headers: {

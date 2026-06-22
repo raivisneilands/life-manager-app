@@ -14,7 +14,6 @@ serve(async (req) => {
   }
 
   const authHeader = req.headers.get("Authorization");
-    console.log("authHeader present:", !!authHeader);
 
   if (!authHeader) {
     return new Response("Unauthorized - no header", { status: 401, headers: corsHeaders });

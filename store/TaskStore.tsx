@@ -35,7 +35,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   addTask: async (task: Task) => {
-    console.log("addTask called, isSyncing:", isSyncing());
     const updated = [...get().tasks, task];
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     set({ tasks: updated });
@@ -65,7 +64,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     set({ tasks: updated });
     if (isSyncing()) {
       const task = updated.find((t) => t.id === taskId);
-      console.log("syncing task:", JSON.stringify(task));
       if (task) await syncUpsert(TABLE, [task]);
     }
   },

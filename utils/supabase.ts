@@ -17,11 +17,6 @@ export const supabase = createClient(
 export async function deleteAccount(): Promise<{ error: string | null }> {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-  console.log("session:", session);
-  console.log("sessionError:", sessionError);
-  console.log("access_token:", session?.access_token);
-
-
   if (!session) return { error: "No active session" };
 
   const res = await fetch(

@@ -54,22 +54,20 @@ export async function getUserId(): Promise<string | null> {
 }
 
 export async function syncUpsert(table: string, records: any[]) {
-  console.log(`syncUpsert called: ${table}`, records.length)
   const user_id = await getUserId()
   if (!user_id || records.length === 0) return
   const rows = records.map((r) => toSnakeCase({ ...r, user_id }))
-  console.log(`syncUpsert(${table}):`, JSON.stringify(rows[0]))
   const { error } = await supabase.from(table).upsert(rows)
-  if (error) console.error(`syncUpsert(${table})`, error.message)
+  if (error) throw new Error(error.message);
 }
 
 export async function syncDelete(table: string, id: string) {
   const { error } = await supabase.from(table).delete().eq('id', id)
-  if (error) console.error(`syncDelete(${table})`, error.message)
+  if (error) throw new Error(error.message);
 }
 
 export async function syncFetch<T>(table: string): Promise<T[]> {
   const { data, error } = await supabase.from(table).select('*')
-  if (error) console.error(`syncFetch(${table})`, error.message)
+  if (error) throw new Error(error.message);
   return ((data ?? []).map(toCamelCase)) as T[]
 }

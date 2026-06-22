@@ -77,13 +77,14 @@ const SectionTitle = styled.Text(({ theme }) => ({
   marginBottom: 12,
 }));
 
-const Card = styled.View(({ theme }) => ({
+const Card = styled.View<{ achieved?: boolean }>(({ theme, achieved }) => ({
   backgroundColor: theme.card,
   borderRadius: 12,
   padding: 16,
   marginBottom: 12,
   borderWidth: 1,
-  borderColor: theme.border,
+  borderColor: achieved ? theme.border + "55" : theme.border,
+  opacity: achieved ? 0.65 : 1,
 }));
 
 const CardRow = styled.View(() => ({
@@ -92,11 +93,40 @@ const CardRow = styled.View(() => ({
   justifyContent: "space-between",
 }));
 
-const CardTitle = styled.Text(({ theme }) => ({
-  color: theme.textPrimary,
-  fontSize: 16,
-  fontWeight: "600",
+const CardTitleRow = styled.View(() => ({
+  flexDirection: "row",
+  alignItems: "center",
   flex: 1,
+  gap: 8,
+  flexWrap: "wrap",
+}));
+
+const CardTitle = styled.Text<{ achieved?: boolean }>(
+  ({ theme, achieved }) => ({
+    color: achieved ? theme.textSecondary : theme.textPrimary,
+    fontSize: 16,
+    fontWeight: "600",
+    textDecorationLine: achieved ? "line-through" : "none",
+  }),
+);
+
+const AchievedBadge = styled.View(() => ({
+  backgroundColor: "#22C55E22",
+  borderWidth: 1,
+  borderColor: "#22C55E66",
+  borderRadius: 99,
+  paddingVertical: 2,
+  paddingHorizontal: 8,
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 4,
+}));
+
+const AchievedBadgeText = styled.Text(() => ({
+  color: "#22C55E",
+  fontSize: 11,
+  fontWeight: "700",
+  letterSpacing: 0.4,
 }));
 
 const CardSubtitle = styled.Text(({ theme }) => ({
@@ -109,7 +139,8 @@ const CardSubtitle = styled.Text(({ theme }) => ({
 const CardActions = styled.View(() => ({
   flexDirection: "row",
   justifyContent: "flex-end",
-  gap: 12,
+  alignItems: "center",
+  gap: 8,
 }));
 
 const ActionButton = styled.TouchableOpacity(() => ({
@@ -135,10 +166,10 @@ const ProgressBarTrack = styled.View(({ theme }) => ({
   marginBottom: 12,
 }));
 
-const ProgressBarFill = styled.View(
-  ({ theme, progress }: { theme?: any; progress: number }) => ({
+const ProgressBarFill = styled.View<{ progress: number; achieved?: boolean }>(
+  ({ theme, progress, achieved }) => ({
     height: 6,
-    backgroundColor: theme.primary,
+    backgroundColor: achieved ? "#22C55E" : theme.primary,
     borderRadius: 99,
     width: `${Math.min(progress, 100)}%`,
   }),
@@ -171,8 +202,8 @@ const PlanStepDivider = styled.View(({ theme }) => ({
   backgroundColor: theme.border,
 }));
 
-const PlanStepName = styled.Text(
-  ({ theme, completed }: { theme?: any; completed: boolean }) => ({
+const PlanStepName = styled.Text<{ completed: boolean }>(
+  ({ theme, completed }) => ({
     color: completed ? theme.textSecondary : theme.textPrimary,
     fontSize: 15,
     fontWeight: "500",
@@ -211,6 +242,10 @@ const EmptyText = styled.Text(({ theme }) => ({
   fontSize: 14,
   textAlign: "center",
   paddingVertical: 32,
+}));
+
+const CollapseButton = styled.TouchableOpacity(() => ({
+  padding: 4,
 }));
 
 // ─── Sheet ────────────────────────────────────────────────────────────────────
@@ -388,9 +423,7 @@ const GoalTypeText = styled.Text(({ theme }) => ({
 
 const GoalTypeOption = styled.TouchableOpacity<{ selected: boolean }>(
   ({ theme, selected }) => ({
-    backgroundColor: selected
-      ? theme.primary + "33" // ~20% opacity
-      : theme.surface,
+    backgroundColor: selected ? theme.primary + "33" : theme.surface,
     borderWidth: 1,
     borderColor: selected ? theme.primary : theme.border,
     borderRadius: 10,
@@ -425,6 +458,13 @@ const GenerateAIButtonText = styled.Text(({ theme }) => ({
   fontWeight: "600",
 }));
 
+const ErrorText = styled.Text(() => ({
+  color: "#EF4444",
+  fontSize: 13,
+  marginTop: 4,
+  marginBottom: 8,
+}));
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormState = {
@@ -445,6 +485,33 @@ const EMPTY_FORM: FormState = {
   unit: "",
 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getProgress({
+  current,
+  target,
+  goalType,
+}: {
+  current: number;
+  target: number;
+  goalType: "min" | "max";
+}) {
+  if (!current || !target) return 0;
+  if (goalType === "max") return Math.min(100, (current / target) * 100);
+  if (goalType === "min") return Math.min(100, (target / current) * 100);
+  return 0;
+}
+
+function isAchieved(goal: Goal) {
+  return (
+    getProgress({
+      current: goal.currentValue,
+      target: goal.targetValue,
+      goalType: goal.goalType ?? "max",
+    }) >= 100
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function GoalsScreen() {
@@ -458,19 +525,46 @@ export default function GoalsScreen() {
   const togglePlanStep = useGoalStore((s) => s.togglePlanStep);
   const [showGoalTypePicker, setShowGoalTypePicker] = useState(false);
   const [generatingGoalId, setGeneratingGoalId] = useState<string | null>(null);
+  const [planError, setPlanError] = useState<string | null>(null);
 
   const [sheetVisible, setSheetVisible] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [newStepText, setNewStepText] = useState<Record<string, string>>({});
+  // Track which goal plan sections are collapsed (true = collapsed)
+  const [collapsedGoals, setCollapsedGoals] = useState<Record<string, boolean>>(
+    {},
+  );
   const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
 
   useEffect(() => {
     getGoals();
   }, []);
 
+  // Auto-collapse achieved goals; keep active ones expanded
+  useEffect(() => {
+    setCollapsedGoals((prev) => {
+      const next = { ...prev };
+      goals.forEach((goal) => {
+        // Only set a default if we haven't seen this goal before
+        if (next[goal.id] === undefined) {
+          next[goal.id] = isAchieved(goal);
+        } else if (isAchieved(goal) && !prev[goal.id]) {
+          // Goal just became achieved — auto-collapse it
+          next[goal.id] = true;
+        }
+      });
+      return next;
+    });
+  }, [goals]);
+
+  function toggleCollapse(goalId: string) {
+    setCollapsedGoals((prev) => ({ ...prev, [goalId]: !prev[goalId] }));
+  }
+
   async function handleGeneratePlan(goal: Goal) {
+    setPlanError(null);
     try {
       setGeneratingGoalId(goal.id);
 
@@ -490,34 +584,10 @@ export default function GoalsScreen() {
 
       await useGoalStore.getState().setPlanSteps(goal.id, newSteps);
     } catch (err) {
-      console.error("Failed to generate plan:", err);
+      setPlanError("Couldn't generate a plan. Please try again.");
     } finally {
       setGeneratingGoalId(null);
     }
-  }
-
-  function getProgress({
-    current,
-    target,
-    goalType,
-  }: {
-    current: number;
-    target: number;
-    goalType: "min" | "max";
-  }) {
-    if (!current || !target) return 0;
-
-    // MAX goals: higher is better (e.g. earn money, lift weight)
-    if (goalType === "max") {
-      return Math.min(100, (current / target) * 100);
-    }
-
-    // MIN goals: lower is better (e.g. run time, weight, sleep debt)
-    if (goalType === "min") {
-      return Math.min(100, (target / current) * 100);
-    }
-
-    return 0;
   }
 
   function openSheet(goal?: Goal) {
@@ -627,11 +697,26 @@ export default function GoalsScreen() {
               target: goal.targetValue,
               goalType: goal.goalType ?? "max",
             });
+            const achieved = progress >= 100;
+            const collapsed = !!collapsedGoals[goal.id];
 
             return (
-              <Card key={goal.id}>
+              <Card key={goal.id} achieved={achieved}>
+                {/* ── Title row ── */}
                 <CardRow>
-                  <CardTitle>{goal.title}</CardTitle>
+                  <CardTitleRow>
+                    <CardTitle achieved={achieved}>{goal.title}</CardTitle>
+                    {achieved && (
+                      <AchievedBadge>
+                        <MaterialIcons
+                          name="check-circle"
+                          size={11}
+                          color="#22C55E"
+                        />
+                        <AchievedBadgeText>Achieved</AchievedBadgeText>
+                      </AchievedBadge>
+                    )}
+                  </CardTitleRow>
 
                   <CardActions>
                     <ActionButton onPress={() => openSheet(goal)}>
@@ -644,9 +729,17 @@ export default function GoalsScreen() {
                         color="#EF4444"
                       />
                     </ActionButton>
+                    <CollapseButton onPress={() => toggleCollapse(goal.id)}>
+                      <MaterialIcons
+                        name={collapsed ? "expand-more" : "expand-less"}
+                        size={22}
+                        color="#888"
+                      />
+                    </CollapseButton>
                   </CardActions>
                 </CardRow>
 
+                {/* ── Deadline + progress (always visible) ── */}
                 {goal.deadline && (
                   <CardSubtitle>Target: {goal.deadline}</CardSubtitle>
                 )}
@@ -659,89 +752,104 @@ export default function GoalsScreen() {
                 </ProgressRow>
 
                 <ProgressBarTrack>
-                  <ProgressBarFill progress={progress} />
+                  <ProgressBarFill progress={progress} achieved={achieved} />
                 </ProgressBarTrack>
 
-                <Divider />
+                {/* ── Collapsible plan section ── */}
+                {!collapsed && (
+                  <>
+                    <Divider />
 
-                <PlanTitle>Plan</PlanTitle>
+                    <PlanTitle>Plan</PlanTitle>
 
-                <GenerateAIButton
-                  disabled={generatingGoalId === goal.id}
-                  onPress={() => handleGeneratePlan(goal)}
-                >
-                  {generatingGoalId === goal.id ? (
-                    <>
-                      <ActivityIndicator size="small" color="#8B5CF6" />
-                      <GenerateAIButtonText>Generating...</GenerateAIButtonText>
-                    </>
-                  ) : (
-                    <>
-                      <MaterialIcons
-                        name="auto-awesome"
-                        size={18}
-                        color="#8B5CF6"
+                    <GenerateAIButton
+                      disabled={generatingGoalId === goal.id}
+                      onPress={() => handleGeneratePlan(goal)}
+                    >
+                      {generatingGoalId === goal.id ? (
+                        <>
+                          <ActivityIndicator size="small" color="#8B5CF6" />
+                          <GenerateAIButtonText>
+                            Generating...
+                          </GenerateAIButtonText>
+                        </>
+                      ) : (
+                        <>
+                          <MaterialIcons
+                            name="auto-awesome"
+                            size={18}
+                            color="#8B5CF6"
+                          />
+                          <GenerateAIButtonText>
+                            {goal.planSteps.length === 0
+                              ? "Generate with AI"
+                              : "Regenerate Plan"}
+                          </GenerateAIButtonText>
+                        </>
+                      )}
+                    </GenerateAIButton>
+
+                    {planError && <ErrorText>{planError}</ErrorText>}
+
+                    {goal.planSteps.map((step, index) => (
+                      <React.Fragment key={step.id}>
+                        {index > 0 && <PlanStepDivider />}
+                        <PlanStepRow>
+                          <ActionButton
+                            onPress={() => togglePlanStep(goal.id, step.id)}
+                          >
+                            <MaterialIcons
+                              name={
+                                step.completed
+                                  ? "check-circle"
+                                  : "check-circle-outline"
+                              }
+                              size={20}
+                              color={step.completed ? "#22C55E" : "#888"}
+                            />
+                          </ActionButton>
+
+                          <PlanStepName completed={step.completed}>
+                            {step.title}
+                          </PlanStepName>
+
+                          <ActionButton
+                            onPress={() => removePlanStep(goal.id, step.id)}
+                          >
+                            <MaterialIcons
+                              name="close"
+                              size={16}
+                              color="#888"
+                            />
+                          </ActionButton>
+                        </PlanStepRow>
+                      </React.Fragment>
+                    ))}
+
+                    <AddStepRow>
+                      <AddStepInput
+                        placeholder="Add a plan step…"
+                        value={newStepText[goal.id] ?? ""}
+                        onChangeText={(val) =>
+                          setNewStepText((prev) => ({
+                            ...prev,
+                            [goal.id]: val,
+                          }))
+                        }
+                        onSubmitEditing={() => handleAddStep(goal.id)}
                       />
-                      <GenerateAIButtonText>
-                        {goal.planSteps.length === 0
-                          ? "Generate with AI"
-                          : "Regenerate Plan"}
-                      </GenerateAIButtonText>
-                    </>
-                  )}
-                </GenerateAIButton>
-
-                {goal.planSteps.map((step, index) => (
-                  <React.Fragment key={step.id}>
-                    {index > 0 && <PlanStepDivider />}
-                    <PlanStepRow>
-                      <ActionButton
-                        onPress={() => togglePlanStep(goal.id, step.id)}
-                      >
-                        <MaterialIcons
-                          name={
-                            step.completed
-                              ? "check-circle"
-                              : "check-circle-outline"
-                          }
-                          size={20}
-                          color={step.completed ? "#22C55E" : "#888"}
-                        />
-                      </ActionButton>
-
-                      <PlanStepName completed={step.completed}>
-                        {step.title}
-                      </PlanStepName>
-
-                      <ActionButton
-                        onPress={() => removePlanStep(goal.id, step.id)}
-                      >
-                        <MaterialIcons name="close" size={16} color="#888" />
-                      </ActionButton>
-                    </PlanStepRow>
-                  </React.Fragment>
-                ))}
-
-                <AddStepRow>
-                  <AddStepInput
-                    placeholder="Add a plan step…"
-                    value={newStepText[goal.id] ?? ""}
-                    onChangeText={(val) =>
-                      setNewStepText((prev) => ({ ...prev, [goal.id]: val }))
-                    }
-                    onSubmitEditing={() => handleAddStep(goal.id)}
-                  />
-                  <AddStepButton onPress={() => handleAddStep(goal.id)}>
-                    <MaterialIcons name="add" size={20} color="#fff" />
-                  </AddStepButton>
-                </AddStepRow>
+                      <AddStepButton onPress={() => handleAddStep(goal.id)}>
+                        <MaterialIcons name="add" size={20} color="#fff" />
+                      </AddStepButton>
+                    </AddStepRow>
+                  </>
+                )}
               </Card>
             );
           })}
         </Section>
       </ScrollView>
 
-      {/* Sheet UI remains unchanged visually */}
       <Modal
         visible={sheetVisible}
         transparent
@@ -857,7 +965,6 @@ export default function GoalsScreen() {
         </Sheet>
       </Modal>
 
-      {/* Confirm delete */}
       <Modal
         visible={!!confirmId}
         transparent
@@ -891,8 +998,6 @@ export default function GoalsScreen() {
           </ConfirmButtonRow>
         </ConfirmBox>
       </Modal>
-
-      {/* Confirm delete stays same (omitted for brevity) */}
     </Container>
   );
 }

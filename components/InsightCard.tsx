@@ -169,6 +169,14 @@ const HeaderLeft = styled.View(() => ({
   flex: 1,
 }));
 
+const DisclaimerText = styled.Text(({ theme }) => ({
+  marginTop: 8,
+  color: theme.textSecondary,
+  fontSize: 11,
+  lineHeight: 16,
+  opacity: 0.8,
+}));
+
 // ─── Context hook ───────────────────────────────────────────────────────────────
 
 function useScreenContext(screen: InsightScreen): string {
@@ -219,6 +227,17 @@ export function InsightCard({ screen }: InsightCardProps) {
 
   const opacity = React.useRef(new Animated.Value(0)).current;
   const collapseAnim = React.useRef(new Animated.Value(1)).current;
+
+  const SCREEN_DISCLAIMER: Partial<Record<InsightScreen, string>> = {
+    health:
+      "Informational only. Not medical advice. Consult a qualified healthcare professional for medical advice, diagnosis, or treatment.",
+
+    finance:
+      "Informational only. Not financial advice. Consider consulting a qualified financial professional before making financial decisions.",
+
+    fitness:
+      "Informational only. Not a substitute for professional fitness or healthcare advice. Consult a qualified professional before making significant changes to your exercise routine.",
+  };
 
   const toggleCollapse = () => {
     const toValue = collapsed ? 1 : 0;
@@ -287,10 +306,16 @@ export function InsightCard({ screen }: InsightCardProps) {
           {!loading && !error && insight && (
             <Footer>
               <Dot accentColor={accentColor} />
-              <FooterText>AI-generated · refreshes daily</FooterText>
+              <FooterText>
+                AI-generated · for informational purposes · refreshes daily
+              </FooterText>
             </Footer>
           )}
         </Animated.View>
+      )}
+
+      {SCREEN_DISCLAIMER[screen] && (
+        <DisclaimerText>{SCREEN_DISCLAIMER[screen]}</DisclaimerText>
       )}
     </Card>
   );

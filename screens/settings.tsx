@@ -10,15 +10,24 @@ import { useJournalStore } from "@/store/JournalStore";
 import { useRelationshipStore } from "@/store/RelationshipStore";
 import { useSyncStore } from "@/store/syncStore";
 import { useTaskStore } from "@/store/TaskStore";
-import { downloadSupabaseToLocal, uploadLocalToSupabase } from '@/utils/migrateToSupabase';
+import {
+  downloadSupabaseToLocal,
+  uploadLocalToSupabase,
+} from "@/utils/migrateToSupabase";
 import { supabase } from "@/utils/supabase";
 import styled from "@emotion/native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useContext, useState } from "react";
-import { ActivityIndicator, Modal, ScrollView, Switch } from "react-native";
+import {
+  ActivityIndicator,
+  Linking,
+  Modal,
+  ScrollView,
+  Switch
+} from "react-native";
 
-const isSyncing = () => useSyncStore.getState().syncEnabled
+const isSyncing = () => useSyncStore.getState().syncEnabled;
 
 const Header = styled.View(({ theme }) => ({
   paddingBottom: 20,
@@ -257,23 +266,23 @@ function SwitchSetting({
         <Switch
           value={value}
           onValueChange={onValueChange}
-          trackColor={{ false: '#6B7280', true: '#8B5CF6' }}
+          trackColor={{ false: "#6B7280", true: "#8B5CF6" }}
           thumbColor="#fff"
         />
       </SettingRow>
       {showDivider && <RowDivider />}
     </>
-  )
+  );
 }
 
 interface SwitchSettingProps {
   icon: keyof typeof MaterialIcons.glyphMap;
-  iconBg: string
-  label: string
-  subtitle?: string
-  value: boolean
-  onValueChange: (val: boolean) => void
-  showDivider?: boolean
+  iconBg: string;
+  label: string;
+  subtitle?: string;
+  value: boolean;
+  onValueChange: (val: boolean) => void;
+  showDivider?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -295,10 +304,10 @@ export default function SettingsScreen() {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
-  const { syncEnabled, setSyncEnabled } = useSyncStore()
-  const [showModal, setShowModal] = useState(false)
-  const [migrating, setMigrating] = useState(false)
-  const { session } = useAuth() // your existing AuthContext
+  const { syncEnabled, setSyncEnabled } = useSyncStore();
+  const [showModal, setShowModal] = useState(false);
+  const [migrating, setMigrating] = useState(false);
+  const { session } = useAuth(); // your existing AuthContext
 
   const clearTasks = useTaskStore((s) => s.clearTasks);
   const clearHabits = useHabitStore((s) => s.clearHabits);
@@ -311,40 +320,40 @@ export default function SettingsScreen() {
 
   const handleSyncToggle = async (val: boolean) => {
     if (val && !session) {
-      router.push('/account') // or wherever your auth screen lives
-      return
+      router.push("/account"); // or wherever your auth screen lives
+      return;
     }
     if (val) {
-      setShowModal(true) // ask user what to do with local data
+      setShowModal(true); // ask user what to do with local data
     } else {
-      await setSyncEnabled(false)
+      await setSyncEnabled(false);
     }
-  }
+  };
 
   const handleUpload = async () => {
-    setMigrating(true)
-    await uploadLocalToSupabase()
-    await setSyncEnabled(true)
-    setMigrating(false)
-    setShowModal(false)
-  }
+    setMigrating(true);
+    await uploadLocalToSupabase();
+    await setSyncEnabled(true);
+    setMigrating(false);
+    setShowModal(false);
+  };
 
   const handleDownload = async () => {
-    setMigrating(true)
-    await downloadSupabaseToLocal()
-    await setSyncEnabled(true)
-    setMigrating(false)
-    setShowModal(false)
+    setMigrating(true);
+    await downloadSupabaseToLocal();
+    await setSyncEnabled(true);
+    setMigrating(false);
+    setShowModal(false);
     // Re-init all stores so they pick up the new local data
-    await useRelationshipStore.getState().getRelationships()
-    await useGoalStore.getState().getGoals()
-    await useFitnessStore.getState().getFitnessEntries()
-    await useHabitStore.getState().getHabits()
-    await useTaskStore.getState().getTasks()
-    await useHealthStore.getState().getEntries()
-    await useFinanceStore.getState().getEntries()
-    await useJournalStore.getState().getEntries()
-  }
+    await useRelationshipStore.getState().getRelationships();
+    await useGoalStore.getState().getGoals();
+    await useFitnessStore.getState().getFitnessEntries();
+    await useHabitStore.getState().getHabits();
+    await useTaskStore.getState().getTasks();
+    await useHealthStore.getState().getEntries();
+    await useFinanceStore.getState().getEntries();
+    await useJournalStore.getState().getEntries();
+  };
 
   async function handleClearAllData() {
     await Promise.all([
@@ -359,22 +368,31 @@ export default function SettingsScreen() {
     ]);
 
     if (isSyncing()) {
-      const { data } = await supabase.auth.getSession()
-      const user_id = data.session?.user.id
+      const { data } = await supabase.auth.getSession();
+      const user_id = data.session?.user.id;
       if (user_id) {
         await Promise.all([
-          supabase.from('tasks').delete().eq('user_id', user_id),
-          supabase.from('habits').delete().eq('user_id', user_id),
-          supabase.from('health_entries').delete().eq('user_id', user_id),
-          supabase.from('finance_entries').delete().eq('user_id', user_id),
-          supabase.from('relationships').delete().eq('user_id', user_id),
-          supabase.from('fitness_entries').delete().eq('user_id', user_id),
-          supabase.from('goals').delete().eq('user_id', user_id),
-          supabase.from('journal_entries').delete().eq('user_id', user_id),
-        ])
+          supabase.from("tasks").delete().eq("user_id", user_id),
+          supabase.from("habits").delete().eq("user_id", user_id),
+          supabase.from("health_entries").delete().eq("user_id", user_id),
+          supabase.from("finance_entries").delete().eq("user_id", user_id),
+          supabase.from("relationships").delete().eq("user_id", user_id),
+          supabase.from("fitness_entries").delete().eq("user_id", user_id),
+          supabase.from("goals").delete().eq("user_id", user_id),
+          supabase.from("journal_entries").delete().eq("user_id", user_id),
+        ]);
       }
     }
     setConfirmAction(null);
+  }
+
+  function handleRateApp() {
+    const packageName = "com.lifemanager.lifemanagerproapp";
+    Linking.openURL(`market://details?id=${packageName}`).catch(() => {
+      Linking.openURL(
+        `https://play.google.com/store/apps/details?id=${packageName}`,
+      );
+    });
   }
 
   return (
@@ -413,7 +431,7 @@ export default function SettingsScreen() {
           <Card>
             <SwitchSetting
               icon="backup"
-              iconBg={syncEnabled ? '#8B5CF6' : '#6B7280'}
+              iconBg={syncEnabled ? "#8B5CF6" : "#6B7280"}
               label="Sync to cloud"
               subtitle="Requires an account"
               value={syncEnabled}
@@ -445,6 +463,13 @@ export default function SettingsScreen() {
               iconBg="#6B7280"
               label="Terms of Service"
               onPress={() => router.push("/settings/terms")}
+              showDivider
+            />
+            <LinkSetting
+              icon="star-rate"
+              iconBg="#F59E0B"
+              label="Rate This App"
+              onPress={handleRateApp}
             />
           </Card>
         </Section>

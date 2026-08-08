@@ -1,9 +1,10 @@
+import { ENV } from "@/config/env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 
 export const supabase = createClient(
-  process.env.EXPO_PUBLIC_SUPABASE_URL!,
-  process.env.EXPO_PUBLIC_SUPABASE_KEY!,
+  "https://apmpmwgaysmcxyppiulf.supabase.co",
+  "sb_publishable_1a5lFmvFAR7qVGi5c8pNoA_eN2tNyrv",
   {
     auth: {
       storage: AsyncStorage,
@@ -11,7 +12,7 @@ export const supabase = createClient(
       persistSession: true,
       detectSessionInUrl: false,
     },
-  },
+  }
 );
 
 export async function deleteAccount(): Promise<{ error: string | null }> {
@@ -20,7 +21,7 @@ export async function deleteAccount(): Promise<{ error: string | null }> {
   if (!session) return { error: "No active session" };
 
   const res = await fetch(
-    `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`,
+    `${ENV.supabaseUrl}/functions/v1/delete-account`,
     {
       method: "POST",
       headers: {

@@ -71,15 +71,6 @@ const ButtonRow = styled.View(() => ({
   gap: 12,
 }));
 
-const CancelButton = styled.TouchableOpacity(({ theme }) => ({
-  flex: 1,
-  paddingVertical: 14,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: theme.border,
-  alignItems: "center",
-}));
-
 const CancelButtonText = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 15,
@@ -140,6 +131,62 @@ const ConfirmButtonRow = styled.View(() => ({
   gap: 12,
 }));
 
+const BottomSpacer = styled.View(() => ({
+  height: 32,
+}));
+
+const Backdrop = styled.Pressable(() => ({
+  flex: 1,
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: 24,
+}));
+
+const ModalCard = styled.View(({ theme }) => ({
+  borderRadius: 16,
+  padding: 24,
+  width: "100%",
+  backgroundColor: theme.card,
+  borderWidth: 1,
+  borderColor: theme.border,
+}));
+
+const ModalTitle = styled.Text(({ theme }) => ({
+  fontSize: 18,
+  fontWeight: "700",
+  marginBottom: 8,
+  color: theme.textPrimary,
+}));
+
+const ModalBody = styled.Text(({ theme }) => ({
+  fontSize: 14,
+  lineHeight: 20,
+  marginBottom: 20,
+  color: theme.textSecondary,
+}));
+
+const ModalErrorText = styled.Text(({ theme }) => ({
+  color: theme.danger,
+  marginBottom: 12,
+  fontSize: 13,
+}));
+
+const CancelButton = styled.TouchableOpacity(({ theme }) => ({
+  flex: 1,
+  paddingVertical: 14,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: theme.border,
+  alignItems: "center",
+}));
+
+const CancelText = styled.Text(({ theme }) => ({
+  color: theme.textSecondary,
+  fontSize: 15,
+  fontWeight: "600",
+}));
+
 const DangerButton = styled.TouchableOpacity(({ theme }) => ({
   flex: 1,
   paddingVertical: 14,
@@ -153,49 +200,6 @@ const DangerButtonText = styled.Text(() => ({
   fontSize: 15,
   fontWeight: "600",
 }));
-
-const BottomSpacer = styled.View(() => ({
-  height: 32,
-}));
-
-const CancelText = styled.Text`
-  color: ${({ theme }) => theme.textSecondary};
-`;
-
-const Backdrop = styled.View`
-  flex: 1;
-  background-color: rgba(0, 0, 0, 0.5);
-  justify-content: center;
-  align-items: center;
-  padding: 24px;
-`;
-
-const ModalCard = styled.View`
-  border-radius: 16px;
-  padding: 24px;
-  width: 100%;
-  background-color: ${({ theme }) => theme.background};
-`;
-
-const ModalTitle = styled.Text`
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: ${({ theme }) => theme.textPrimary};
-`;
-
-const ModalBody = styled.Text`
-  font-size: 14px;
-  line-height: 20px;
-  margin-bottom: 20px;
-  color: ${({ theme }) => theme.textSecondary};
-`;
-
-const ModalErrorText = styled.Text`
-  color: ${({ theme }) => theme.danger};
-  margin-bottom: 12px;
-  font-size: 13px;
-`;
 
 type Profile = {
   username: string;
@@ -222,9 +226,6 @@ export default function AccountScreen() {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   const userId = session?.user?.id;
   const email = session?.user?.email;
@@ -280,19 +281,6 @@ export default function AccountScreen() {
     }
   }
 
-  async function handleDeleteAccount() {
-    setDeleting(true);
-    setDeleteError(null);
-    const { error } = await deleteAccount();
-    setDeleting(false);
-    if (error) {
-      setDeleteError(error);
-    } else {
-      setShowDeleteModal(false);
-      // AuthContext signing out will redirect automatically via onAuthStateChange
-    }
-  }
-
   function openEdit(field: "username" | "website") {
     setEditField(field);
     setEditValue(profile[field]);
@@ -336,12 +324,6 @@ export default function AccountScreen() {
       label: "Member Since",
       value: memberSince,
     },
-    // {
-    //   icon: "star",
-    //   iconBg: "#F59E0B",
-    //   label: "Plan",
-    //   value: "Free",
-    // },
   ];
 
   return (
@@ -374,32 +356,26 @@ export default function AccountScreen() {
           icon="delete-forever"
           label="Delete Account"
           danger
-          onPress={() => setShowDeleteModal(true)}
+          onPress={() =>
+            setConfirmAction({
+              title: "Delete Account",
+              message:
+                "This will permanently delete your account and all associated data. This action cannot be undone.",
+              onConfirm: async () => {
+                const { error } = await deleteAccount();
+
+                if (error) {
+                  Alert.alert("Delete Failed", error);
+                }
+
+                setConfirmAction(null);
+              },
+            })
+          }
         />
 
         <BottomSpacer />
       </ScrollView>
-
-      <Modal visible={showDeleteModal} transparent animationType="fade">
-        <Backdrop>
-          <ModalCard>
-            <ModalTitle>Delete Account</ModalTitle>
-            <ModalBody>
-              This will permanently delete your account and clear all local data.
-              This cannot be undone.
-            </ModalBody>
-            {deleteError && <ModalErrorText>{deleteError}</ModalErrorText>}
-            <DangerButton onPress={handleDeleteAccount} disabled={deleting}>
-              <DangerButtonText>
-                {deleting ? "Deleting…" : "Yes, delete my account"}
-              </DangerButtonText>
-            </DangerButton>
-            <CancelButton onPress={() => { setShowDeleteModal(false); setDeleteError(null); }}>
-              <CancelText>Cancel</CancelText>
-            </CancelButton>
-          </ModalCard>
-        </Backdrop>
-      </Modal>
 
       {/* Edit field modal */}
       <Modal

@@ -9,13 +9,21 @@
       "distribution": "internal"
     },
     "preview": {
+      "env": {
+        "SUPABASE_URL": "https://apmpmwgaysmcxyppiulf.supabase.co",
+        "SUPABASE_ANON_KEY": "sb_publishable_1a5lFmvFAR7qVGi5c8pNoA_eN2tNyrv"
+      },
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "SUPABASE_URL": "https://apmpmwgaysmcxyppiulf.supabase.co",
+        "SUPABASE_ANON_KEY": "sb_publishable_1a5lFmvFAR7qVGi5c8pNoA_eN2tNyrv"
+      }
     }
   },
   "submit": {

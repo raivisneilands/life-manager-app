@@ -185,6 +185,12 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<StatusMessage>(null);
 
+  const redirectTo = Platform.select({
+    ios: "lifemanagerapp://auth/callback",
+    android: "lifemanagerapp://auth/callback",
+    web: "https://auth-callback-web.vercel.app/",
+  });
+
   async function signInWithEmail() {
     setLoading(true);
     setStatus(null);
@@ -211,6 +217,9 @@ export default function AuthScreen() {
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
+      options: {
+        emailRedirectTo: redirectTo,
+      },
     });
 
     if (error) {

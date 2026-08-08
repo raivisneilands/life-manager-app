@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/AuthContext";
 import styled from "@emotion/native";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -29,13 +30,74 @@ const Title = styled.Text(({ theme }) => ({
   letterSpacing: 0.4,
 }));
 
+const StatusBanner = styled.View((props: any) => {
+  const { theme, type } = props;
+
+  return {
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+
+    backgroundColor:
+      type === "error"
+        ? `${theme.danger}22`
+        : type === "success"
+          ? "#22C55E22"
+          : `${theme.primary}22`,
+
+    borderWidth: 1,
+
+    borderColor:
+      type === "error"
+        ? theme.danger
+        : type === "success"
+          ? "#22C55E"
+          : theme.primary,
+  };
+});
+
+const StatusText = styled.Text(
+  ({ theme, type }: { theme?: any; type: "info" | "error" | "success" }) => ({
+    color:
+      type === "error"
+        ? theme.danger
+        : type === "success"
+          ? "#22C55E"
+          : theme.primary,
+
+    fontSize: 13,
+    flex: 1,
+    lineHeight: 18,
+    fontWeight: "500",
+  }),
+);
+
 export default function AppHeader() {
   const router = useRouter();
   const [canGoBack, setCanGoBack] = useState(false);
+  const { authEvent } = useAuth();
+
+  const [showVerified, setShowVerified] = useState(false);
 
   useEffect(() => {
     setCanGoBack(router.canGoBack());
   }, []);
+
+  useEffect(() => {
+    if (authEvent === "SIGNED_IN") {
+      setShowVerified(true);
+
+      const t = setTimeout(() => {
+        setShowVerified(false);
+      }, 4000);
+
+      return () => clearTimeout(t);
+    }
+  }, [authEvent]);
 
   const [visible, setVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
@@ -73,18 +135,25 @@ export default function AppHeader() {
   }
 
   return (
-    <Row>
-      <Left>
-        <Menu
-          visible={visible}
-          open={open}
-          close={close}
-          slideAnim={slideAnim}
-          backdropAnim={backdropAnim}
-        />
-        <Title>Life Manager</Title>
-      </Left>
-      {canGoBack && <BackButton onPress={() => router.back()} />}
-    </Row>
+    <>
+      {showVerified && (
+        <StatusBanner type="success">
+          <StatusText type="success">Email verified successfully</StatusText>
+        </StatusBanner>
+      )}
+      <Row>
+        <Left>
+          <Menu
+            visible={visible}
+            open={open}
+            close={close}
+            slideAnim={slideAnim}
+            backdropAnim={backdropAnim}
+          />
+          <Title>Life Manager</Title>
+        </Left>
+        {canGoBack && <BackButton onPress={() => router.back()} />}
+      </Row>
+    </>
   );
 }

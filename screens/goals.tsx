@@ -5,6 +5,7 @@ import { useGoalStore } from "@/store/GoalStore";
 import { generateGoalPlan } from "@/utils/ai";
 import { supabase } from "@/utils/supabase";
 import styled from "@emotion/native";
+import { useTheme } from "@emotion/react";
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -465,12 +466,19 @@ const ErrorText = styled.Text(() => ({
   marginBottom: 8,
 }));
 
+const HintText = styled.Text(({ theme }) => ({
+  color: theme.textSecondary,
+  fontSize: 13,
+  marginTop: 8,
+  fontStyle: "italic",
+}));
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormState = {
   title: string;
   deadline: string;
-  goalType: "min" | "max";
+  goalType: "min" | "max" | "binary";
   currentValue: string;
   targetValue: string;
   unit: string;
@@ -487,29 +495,40 @@ const EMPTY_FORM: FormState = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getProgress({
-  current,
-  target,
-  goalType,
-}: {
-  current: number;
-  target: number;
-  goalType: "min" | "max";
-}) {
-  if (!current || !target) return 0;
-  if (goalType === "max") return Math.min(100, (current / target) * 100);
-  if (goalType === "min") return Math.min(100, (target / current) * 100);
-  return 0;
+function getProgress(goal: Goal): number {
+  switch (goal.goalType) {
+    case "binary": {
+      if (goal.planSteps.length > 0) {
+        const done = goal.planSteps.filter((s) => s.completed).length;
+        return (done / goal.planSteps.length) * 100;
+      }
+      return 0;
+    }
+
+    case "max": {
+      if (!goal.currentValue || !goal.targetValue) return 0;
+      return Math.min(100, (goal.currentValue / goal.targetValue) * 100);
+    }
+
+    case "min": {
+      if (!goal.currentValue || !goal.targetValue) return 0;
+      return Math.min(
+        100,
+        ((goal.targetValue - goal.currentValue) / goal.targetValue) * 100,
+      );
+    }
+  }
 }
 
-function isAchieved(goal: Goal) {
-  return (
-    getProgress({
-      current: goal.currentValue,
-      target: goal.targetValue,
-      goalType: goal.goalType ?? "max",
-    }) >= 100
-  );
+function isAchieved(goal: Goal): boolean {
+  if (goal.goalType === "binary") {
+    if (goal.planSteps.length > 0) {
+      return goal.planSteps.every((s) => s.completed);
+    }
+    return false;
+  }
+
+  return getProgress(goal) >= 100;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -523,15 +542,23 @@ export default function GoalsScreen() {
   const addPlanStep = useGoalStore((s) => s.addPlanStep);
   const removePlanStep = useGoalStore((s) => s.removePlanStep);
   const togglePlanStep = useGoalStore((s) => s.togglePlanStep);
+
+  const theme = useTheme();
+
   const [showGoalTypePicker, setShowGoalTypePicker] = useState(false);
   const [generatingGoalId, setGeneratingGoalId] = useState<string | null>(null);
-  const [planError, setPlanError] = useState<string | null>(null);
+  const [planErrors, setPlanErrors] = useState<Record<string, string | null>>(
+    {},
+  );
 
   const [sheetVisible, setSheetVisible] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+
   const [newStepText, setNewStepText] = useState<Record<string, string>>({});
+
   // Track which goal plan sections are collapsed (true = collapsed)
   const [collapsedGoals, setCollapsedGoals] = useState<Record<string, boolean>>(
     {},
@@ -564,17 +591,31 @@ export default function GoalsScreen() {
   }
 
   async function handleGeneratePlan(goal: Goal) {
-    setPlanError(null);
-    try {
-      setGeneratingGoalId(goal.id);
+    setPlanErrors((prev) => ({ ...prev, [goal.id]: null }));
+    setGeneratingGoalId(goal.id);
 
+    try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!session) return;
+      if (!session) {
+        setPlanErrors((prev) => ({
+          ...prev,
+          [goal.id]: "You need to be signed in to generate a plan.",
+        }));
+        return;
+      }
 
       const steps = await generateGoalPlan(goal, session.access_token);
+
+      if (!steps.length) {
+        setPlanErrors((prev) => ({
+          ...prev,
+          [goal.id]: "Couldn't generate a plan. Please try again.",
+        }));
+        return;
+      }
 
       const newSteps: PlanStep[] = steps.map((title: string) => ({
         id: "step-" + Math.random().toString(36).substr(2, 9),
@@ -584,7 +625,11 @@ export default function GoalsScreen() {
 
       await useGoalStore.getState().setPlanSteps(goal.id, newSteps);
     } catch (err) {
-      setPlanError("Couldn't generate a plan. Please try again.");
+      console.error("generateGoalPlan failed:", err);
+      setPlanErrors((prev) => ({
+        ...prev,
+        [goal.id]: "Couldn't generate a plan. Please try again.",
+      }));
     } finally {
       setGeneratingGoalId(null);
     }
@@ -596,7 +641,7 @@ export default function GoalsScreen() {
       setForm({
         title: goal.title,
         deadline: goal.deadline,
-        goalType: (goal.goalType as "min" | "max") ?? "max",
+        goalType: (goal.goalType as "min" | "max" | "binary") ?? "max",
         currentValue: String(goal.currentValue),
         targetValue: String(goal.targetValue),
         unit: goal.unit,
@@ -628,15 +673,21 @@ export default function GoalsScreen() {
   }
 
   function handleSave() {
-    if (!form.title.trim() || !form.targetValue) return;
+    if (!form.title.trim()) return;
+
+    const isBinary = form.goalType === "binary";
+
+    // Non-binary goals need a numeric target to measure progress against.
+    // Binary goals track progress via plan-step completion instead.
+    if (!isBinary && !form.targetValue) return;
 
     const payload = {
       title: form.title,
       deadline: form.deadline,
       goalType: form.goalType,
-      currentValue: Number(form.currentValue) || 0,
-      targetValue: Number(form.targetValue),
-      unit: form.unit,
+      currentValue: isBinary ? 0 : Number(form.currentValue) || 0,
+      targetValue: isBinary ? 0 : Number(form.targetValue),
+      unit: isBinary ? "" : form.unit,
     };
 
     if (editingGoal) {
@@ -692,13 +743,10 @@ export default function GoalsScreen() {
           )}
 
           {goals.map((goal) => {
-            const progress = getProgress({
-              current: goal.currentValue,
-              target: goal.targetValue,
-              goalType: goal.goalType ?? "max",
-            });
-            const achieved = progress >= 100;
+            const progress = getProgress(goal);
+            const achieved = isAchieved(goal);
             const collapsed = !!collapsedGoals[goal.id];
+            const isBinary = goal.goalType === "binary";
 
             return (
               <Card key={goal.id} achieved={achieved}>
@@ -746,7 +794,11 @@ export default function GoalsScreen() {
 
                 <ProgressRow>
                   <ProgressLabel>
-                    {goal.currentValue} / {goal.targetValue} {goal.unit}
+                    {isBinary
+                      ? goal.planSteps.length > 0
+                        ? `${goal.planSteps.filter((s) => s.completed).length} / ${goal.planSteps.length} steps`
+                        : "No steps yet"
+                      : `${goal.currentValue} / ${goal.targetValue} ${goal.unit}`}
                   </ProgressLabel>
                   <ProgressLabel>{progress.toFixed(0)}%</ProgressLabel>
                 </ProgressRow>
@@ -768,7 +820,10 @@ export default function GoalsScreen() {
                     >
                       {generatingGoalId === goal.id ? (
                         <>
-                          <ActivityIndicator size="small" color="#8B5CF6" />
+                          <ActivityIndicator
+                            size="small"
+                            color={theme.primary}
+                          />
                           <GenerateAIButtonText>
                             Generating...
                           </GenerateAIButtonText>
@@ -778,7 +833,7 @@ export default function GoalsScreen() {
                           <MaterialIcons
                             name="auto-awesome"
                             size={18}
-                            color="#8B5CF6"
+                            color={theme.primary}
                           />
                           <GenerateAIButtonText>
                             {goal.planSteps.length === 0
@@ -789,7 +844,16 @@ export default function GoalsScreen() {
                       )}
                     </GenerateAIButton>
 
-                    {planError && <ErrorText>{planError}</ErrorText>}
+                    {planErrors[goal.id] && (
+                      <ErrorText>{planErrors[goal.id]}</ErrorText>
+                    )}
+
+                    {isBinary && goal.planSteps.length === 0 && (
+                      <HintText>
+                        This is a checklist goal — it's marked achieved once
+                        every step below is complete.
+                      </HintText>
+                    )}
 
                     {goal.planSteps.map((step, index) => (
                       <React.Fragment key={step.id}>
@@ -829,6 +893,7 @@ export default function GoalsScreen() {
                     <AddStepRow>
                       <AddStepInput
                         placeholder="Add a plan step…"
+                        placeholderTextColor={theme.textSecondary}
                         value={newStepText[goal.id] ?? ""}
                         onChangeText={(val) =>
                           setNewStepText((prev) => ({
@@ -884,7 +949,9 @@ export default function GoalsScreen() {
                 <GoalTypeText>
                   {form.goalType === "min"
                     ? "Minimize (lower is better)"
-                    : "Maximize (higher is better)"}
+                    : form.goalType === "binary"
+                      ? "Checklist (complete all steps)"
+                      : "Maximize (higher is better)"}
                 </GoalTypeText>
               </GoalTypeButton>
 
@@ -917,39 +984,64 @@ export default function GoalsScreen() {
                       </GoalTypeOptionText>
                     </GoalTypeOption>
                   )}
+
+                  {form.goalType !== "binary" && (
+                    <GoalTypeOption
+                      selected={false}
+                      onPress={() => {
+                        setForm((f) => ({ ...f, goalType: "binary" }));
+                        setShowGoalTypePicker(false);
+                      }}
+                    >
+                      <GoalTypeOptionText>
+                        Checklist (complete all steps)
+                      </GoalTypeOptionText>
+                    </GoalTypeOption>
+                  )}
                 </View>
               )}
 
-              <Label>Progress</Label>
-              <InputRow>
-                <InputWrap>
-                  <Label>Current</Label>
-                  <Input
-                    value={form.currentValue}
-                    onChangeText={(v) =>
-                      setForm((f) => ({ ...f, currentValue: v }))
-                    }
-                  />
-                </InputWrap>
+              {form.goalType === "binary" ? (
+                <HintText>
+                  Checklist goals track progress from plan steps — add and check
+                  off steps after saving. No numeric target needed.
+                </HintText>
+              ) : (
+                <>
+                  <Label>Progress</Label>
+                  <InputRow>
+                    <InputWrap>
+                      <Label>Current</Label>
+                      <Input
+                        value={form.currentValue}
+                        onChangeText={(v) =>
+                          setForm((f) => ({ ...f, currentValue: v }))
+                        }
+                      />
+                    </InputWrap>
 
-                <InputWrap>
-                  <Label>Target</Label>
-                  <Input
-                    value={form.targetValue}
-                    onChangeText={(v) =>
-                      setForm((f) => ({ ...f, targetValue: v }))
-                    }
-                  />
-                </InputWrap>
+                    <InputWrap>
+                      <Label>Target</Label>
+                      <Input
+                        value={form.targetValue}
+                        onChangeText={(v) =>
+                          setForm((f) => ({ ...f, targetValue: v }))
+                        }
+                      />
+                    </InputWrap>
 
-                <InputWrap>
-                  <Label>Unit</Label>
-                  <Input
-                    value={form.unit}
-                    onChangeText={(v) => setForm((f) => ({ ...f, unit: v }))}
-                  />
-                </InputWrap>
-              </InputRow>
+                    <InputWrap>
+                      <Label>Unit</Label>
+                      <Input
+                        value={form.unit}
+                        onChangeText={(v) =>
+                          setForm((f) => ({ ...f, unit: v }))
+                        }
+                      />
+                    </InputWrap>
+                  </InputRow>
+                </>
+              )}
 
               <ButtonRow>
                 <CancelButton onPress={closeSheet}>

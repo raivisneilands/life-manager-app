@@ -89,6 +89,7 @@ STRICT REQUIREMENTS (must follow exactly):
 GOAL TYPE RULE:
 - If goalType = "max" → increasing values means progress
 - If goalType = "min" → decreasing values means progress
+- If goalType = "binary" → this is a checklist goal with NO numeric progress values (no currentValue, targetValue, or unit will be provided). The goal is considered complete only once every step you generate has been checked off. Break the goal's title down into the concrete, sequential actions required to fully accomplish it — do not invent or reference any numeric metric.
 - NEVER assume higher numbers are always better
 
 ---

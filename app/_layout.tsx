@@ -1,5 +1,5 @@
 import AppHeader from "@/components/AppHeader";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useFinanceStore } from "@/store/FinanceStore";
 import { useFitnessStore } from "@/store/FitnessStore";
 import { useGoalStore } from "@/store/GoalStore";
@@ -11,10 +11,13 @@ import { useTaskStore } from "@/store/TaskStore";
 import { darkTheme, lightTheme } from "@/theme";
 import { ThemeProvider } from "@emotion/react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { createContext, useEffect, useState } from "react";
 import { Appearance, useColorScheme } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+
+SplashScreen.preventAutoHideAsync();
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -26,6 +29,14 @@ export const ThemeContext = createContext<{
   setThemeMode: () => {},
 });
 
+export const OnboardingContext = createContext<{
+  completeOnboarding: () => void;
+}>({
+  completeOnboarding: () => {},
+});
+
+const ONBOARDING_KEY = "hasSeenOnboarding";
+
 export default function RootLayout() {
   // ---- STORES INIT ----
   const getHabits = useHabitStore((s) => s.getHabits);
@@ -35,6 +46,8 @@ export default function RootLayout() {
   const getRelationships = useRelationshipStore((s) => s.getRelationships);
   const getFitnessEntries = useFitnessStore((s) => s.getFitnessEntries);
   const getGoals = useGoalStore((s) => s.getGoals);
+
+  const { session } = useAuth();
 
   async function init() {
     await getTasks();
@@ -50,6 +63,30 @@ export default function RootLayout() {
   useEffect(() => {
     init();
   }, []);
+
+  // ---- ONBOARDING LOGIC ----
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(
+    null,
+  );
+
+  useEffect(() => {
+    (async () => {
+      const seen = await AsyncStorage.getItem(ONBOARDING_KEY);
+      setHasSeenOnboarding(seen === "true");
+    })();
+  }, []);
+
+  const completeOnboarding = async () => {
+    setHasSeenOnboarding(true);
+    await AsyncStorage.setItem(ONBOARDING_KEY, "true");
+    router.replace("/(tabs)");
+  };
+
+  useEffect(() => {
+    if (hasSeenOnboarding !== null) {
+      SplashScreen.hideAsync();
+    }
+  }, [hasSeenOnboarding]);
 
   // ---- THEME LOGIC ----
   const systemScheme = useColorScheme();
@@ -89,18 +126,29 @@ export default function RootLayout() {
       <ThemeContext.Provider
         value={{ themeMode, setThemeMode: updateThemeMode }}
       >
-        <ThemeProvider theme={theme}>
-          <SafeAreaProvider>
-            <SafeAreaView
-              style={{ flex: 1, backgroundColor: theme.background }}
-            >
-              <AppHeader />
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-              </Stack>
-            </SafeAreaView>
-          </SafeAreaProvider>
-        </ThemeProvider>
+        <OnboardingContext.Provider value={{ completeOnboarding }}>
+          <ThemeProvider theme={theme}>
+            <SafeAreaProvider>
+              <SafeAreaView
+                style={{ flex: 1, backgroundColor: theme.background }}
+              >
+                {hasSeenOnboarding && <AppHeader />}
+
+                {hasSeenOnboarding !== null && (
+                  <Stack
+                    screenOptions={{ headerShown: false }}
+                    initialRouteName={
+                      hasSeenOnboarding ? "(tabs)" : "onboarding"
+                    }
+                  >
+                    <Stack.Screen name="onboarding" />
+                    <Stack.Screen name="(tabs)" />
+                  </Stack>
+                )}
+              </SafeAreaView>
+            </SafeAreaProvider>
+          </ThemeProvider>
+        </OnboardingContext.Provider>
       </ThemeContext.Provider>
     </AuthProvider>
   );

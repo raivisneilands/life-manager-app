@@ -1,3 +1,4 @@
+import { ENV } from "@/config/env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -48,8 +49,8 @@ export async function setCachedInsight(
 
 // ─── Supabase edge function client ────────────────────────────────────────────
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;      // already public — safe
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+const SUPABASE_URL = ENV.supabaseUrl;      // already public — safe
+const SUPABASE_ANON_KEY = ENV.supabaseAnonKey;
 
 async function callEdgeFunction(
   screen: InsightScreen,
@@ -82,7 +83,7 @@ async function callEdgeFunction(
 // context string that gets sent to OpenAI.
 
 export function buildGoalsContext(goalsStore: {
-  goals: { title: string; currentValue: number; targetValue: number; unit: string; deadline: string; goalType: "min" | "max" }[];
+  goals: { title: string; currentValue: number; targetValue: number; unit: string; deadline: string; goalType: "min" | "max" | "binary" }[];
 }): string {
   const { goals } = goalsStore;
   if (!goals?.length) return "The user has no goals set yet.";
@@ -225,14 +226,19 @@ export function buildFitnessContext(fitnessStore: {
 }
 
 export function buildRelationshipsContext(relationshipsStore: {
-  relationships: { name: string; lastContact?: string; birthday?: string; notes?: string }[];
+  relationships: {
+    name: string;
+    birthday?: string;
+    howWeMet?: string;
+    type?: string;
+  }[];
 }): string {
   const { relationships } = relationshipsStore;
   if (!relationships?.length) return "The user has no relationships tracked.";
-
+ 
   const today = new Date();
   const soon: string[] = [];
-
+ 
   relationships.forEach((r) => {
     if (!r.birthday) return;
     const bday = new Date(r.birthday);
@@ -242,17 +248,17 @@ export function buildRelationshipsContext(relationshipsStore: {
     );
     if (diff >= 0 && diff <= 14) soon.push(`${r.name} in ${diff} day${diff !== 1 ? "s" : ""}`);
   });
-
-  const lines = relationships
-    .slice(0, 6)
-    .map(
-      (r) =>
-        `• ${r.name}${r.lastContact ? ` (last contact: ${r.lastContact})` : ""}`
-    );
-
+ 
+  const lines = relationships.slice(0, 6).map((r) => {
+    const details = [r.type, r.howWeMet ? `met via ${r.howWeMet}` : null]
+      .filter(Boolean)
+      .join(", ");
+    return `• ${r.name}${details ? ` (${details})` : ""}`;
+  });
+ 
   let ctx = `User's relationships:\n${lines.join("\n")}`;
   if (soon.length) ctx += `\nUpcoming birthdays: ${soon.join(", ")}.`;
-
+ 
   return ctx;
 }
 
@@ -298,7 +304,7 @@ export async function generateGoalPlan(
     targetValue: number;
     unit: string;
     deadline: string;
-    goalType: "min" | "max";
+    goalType: "min" | "max" | "binary";
   },
   userJwt: string
 ): Promise<string[]> {

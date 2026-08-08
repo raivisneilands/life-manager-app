@@ -8,7 +8,7 @@ export interface Goal {
   id: string;
   title: string;
   deadline: string;
-  goalType: "min" | "max";
+  goalType: "min" | "max" | "binary";
   currentValue: number;
   targetValue: number;
   unit: string;

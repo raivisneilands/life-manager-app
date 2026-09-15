@@ -1,6 +1,7 @@
 import styled from "@emotion/native";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Animated } from "react-native";
+import ProFeatureLock from "./ProFeatureLock";
 
 import {
   InsightScreen,
@@ -216,7 +217,7 @@ function useScreenContext(screen: InsightScreen): string {
 
 export function InsightCard({ screen }: InsightCardProps) {
   const context = useScreenContext(screen);
-  const { session } = useAuth();
+  const { session, isPro } = useAuth();
 
   const accentColor = SCREEN_ACCENT[screen];
 
@@ -250,13 +251,30 @@ export function InsightCard({ screen }: InsightCardProps) {
   };
 
   const load = useCallback(async () => {
+    console.log("InsightCard load:", {
+      screen,
+      isPro,
+      hasSession: !!session,
+    });
+
+    if (!isPro) {
+      setInsight(null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     opacity.setValue(0);
 
     try {
+      if (!session?.access_token || !session.user?.id) {
+        return;
+      }
       const result = await fetchInsight(screen, context, {
-        userJwt: session?.access_token ?? "",
+        userJwt: session.access_token,
+        userId: session.user.id,
       });
       setInsight(result);
       Animated.timing(opacity, {
@@ -269,12 +287,12 @@ export function InsightCard({ screen }: InsightCardProps) {
     } finally {
       setLoading(false);
     }
-  }, [screen, context, session]);
+  }, [screen, context, session, isPro]);
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen]);
+  }, [screen, isPro]);
 
   return (
     <Card accentColor={accentColor}>
@@ -291,26 +309,30 @@ export function InsightCard({ screen }: InsightCardProps) {
           <Divider accentColor={accentColor} />
 
           <Body>
-            {loading ? (
+            {!isPro ? (
+              <ProFeatureLock
+                title={SCREEN_LABEL[screen]}
+                description="Get personalized AI insights based on your data."
+              />
+            ) : loading ? (
               <LoadingRow>
                 <ActivityIndicator size="small" color={accentColor} />
                 <LoadingText>Generating insight…</LoadingText>
               </LoadingRow>
             ) : error ? (
-              <ErrorText>Couldn't load insight. Try again later.</ErrorText>
+              <ErrorText>{error}</ErrorText>
             ) : insight ? (
-              <InsightText style={{ opacity }}>{insight}</InsightText>
+              <>
+                <InsightText style={{ opacity }}>{insight}</InsightText>
+                <Footer>
+                  <Dot accentColor={accentColor} />
+                  <FooterText>
+                    AI-generated · for informational purposes · refreshes daily
+                  </FooterText>
+                </Footer>
+              </>
             ) : null}
           </Body>
-
-          {!loading && !error && insight && (
-            <Footer>
-              <Dot accentColor={accentColor} />
-              <FooterText>
-                AI-generated · for informational purposes · refreshes daily
-              </FooterText>
-            </Footer>
-          )}
         </Animated.View>
       )}
 

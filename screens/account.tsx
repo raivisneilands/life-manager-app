@@ -2,6 +2,7 @@ import AccountActionButton from "@/components/account/AccountActionButton";
 import AccountAvatar from "@/components/account/AccountAvatar";
 import AccountInfoCard, { InfoRow } from "@/components/account/AccountInfoCard";
 import Container from "@/components/Container";
+import { Paywall } from "@/components/Paywall";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/utils/supabase";
 import styled from "@emotion/native";
@@ -71,6 +72,15 @@ const ButtonRow = styled.View(() => ({
   gap: 12,
 }));
 
+const CancelButton = styled.TouchableOpacity(({ theme }) => ({
+  flex: 1,
+  paddingVertical: 14,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: theme.border,
+  alignItems: "center",
+}));
+
 const CancelButtonText = styled.Text(({ theme }) => ({
   color: theme.textSecondary,
   fontSize: 15,
@@ -131,62 +141,6 @@ const ConfirmButtonRow = styled.View(() => ({
   gap: 12,
 }));
 
-const BottomSpacer = styled.View(() => ({
-  height: 32,
-}));
-
-const Backdrop = styled.Pressable(() => ({
-  flex: 1,
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: 24,
-}));
-
-const ModalCard = styled.View(({ theme }) => ({
-  borderRadius: 16,
-  padding: 24,
-  width: "100%",
-  backgroundColor: theme.card,
-  borderWidth: 1,
-  borderColor: theme.border,
-}));
-
-const ModalTitle = styled.Text(({ theme }) => ({
-  fontSize: 18,
-  fontWeight: "700",
-  marginBottom: 8,
-  color: theme.textPrimary,
-}));
-
-const ModalBody = styled.Text(({ theme }) => ({
-  fontSize: 14,
-  lineHeight: 20,
-  marginBottom: 20,
-  color: theme.textSecondary,
-}));
-
-const ModalErrorText = styled.Text(({ theme }) => ({
-  color: theme.danger,
-  marginBottom: 12,
-  fontSize: 13,
-}));
-
-const CancelButton = styled.TouchableOpacity(({ theme }) => ({
-  flex: 1,
-  paddingVertical: 14,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: theme.border,
-  alignItems: "center",
-}));
-
-const CancelText = styled.Text(({ theme }) => ({
-  color: theme.textSecondary,
-  fontSize: 15,
-  fontWeight: "600",
-}));
-
 const DangerButton = styled.TouchableOpacity(({ theme }) => ({
   flex: 1,
   paddingVertical: 14,
@@ -201,12 +155,16 @@ const DangerButtonText = styled.Text(() => ({
   fontWeight: "600",
 }));
 
+const BottomSpacer = styled.View(() => ({
+  height: 32,
+}));
+
 type Profile = {
   username: string;
-  website: string;
+  is_pro: boolean;
 };
 
-type EditField = "username" | "website" | null;
+type EditField = "username" | null;
 
 type ConfirmAction = {
   title: string;
@@ -216,63 +174,110 @@ type ConfirmAction = {
 
 export default function AccountScreen() {
   const { session, signOut, deleteAccount } = useAuth();
+
+  console.log("ACCOUNT SCREEN RENDER", {
+    hasSession: !!session,
+    userId: session?.user?.id,
+  });
+
   const [loading, setLoading] = useState(true);
+
   const [profile, setProfile] = useState<Profile>({
     username: "",
-    website: "",
+    is_pro: false,
   });
+
   const [editField, setEditField] = useState<EditField>(null);
   const [editValue, setEditValue] = useState("");
+
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
+
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   const userId = session?.user?.id;
   const email = session?.user?.email;
 
   useEffect(() => {
-    if (userId) getProfile();
+    console.log("ACCOUNT useEffect", {
+      userId,
+    });
+
+    if (userId) {
+      getProfile();
+    }
   }, [userId]);
 
   async function getProfile() {
+    if (!userId) return;
+
+    console.log("ACCOUNT getProfile START", { userId });
+
     try {
       setLoading(true);
+
+      console.log("ACCOUNT querying profile");
+
       const { data, error, status } = await supabase
         .from("profiles")
-        .select("username, website")
+        .select("username, is_pro")
         .eq("id", userId)
         .single();
 
-      if (error && status !== 406) throw error;
+      console.log("ACCOUNT profile response", {
+        data,
+        error,
+        status,
+      });
+
+      if (error && status !== 406) {
+        throw error;
+      }
 
       if (data) {
         setProfile({
           username: data.username || "",
-          website: data.website || "",
+          is_pro: data.is_pro === true,
         });
       }
     } catch (error) {
+      console.error("ACCOUNT getProfile ERROR", error);
+
       if (error instanceof Error) {
         Alert.alert("Error loading profile", error.message);
       }
     } finally {
+      console.log("ACCOUNT getProfile FINALLY");
       setLoading(false);
     }
   }
 
-  async function updateProfile(field: "username" | "website", value: string) {
+  async function updateProfile(field: "username", value: string) {
+    if (!userId) return;
+
     try {
       setLoading(true);
+
+      const trimmedValue = value.trim();
+
       const updates = {
         id: userId,
-        [field]: value,
+        [field]: trimmedValue,
         updated_at: new Date(),
       };
 
       const { error } = await supabase.from("profiles").upsert(updates);
-      if (error) throw error;
 
-      setProfile((prev) => ({ ...prev, [field]: value }));
+      if (error) {
+        throw error;
+      }
+
+      setProfile((prev) => ({
+        ...prev,
+        [field]: trimmedValue,
+      }));
+
       setEditField(null);
     } catch (error: any) {
       Alert.alert("Error updating profile", error.message);
@@ -281,12 +286,13 @@ export default function AccountScreen() {
     }
   }
 
-  function openEdit(field: "username" | "website") {
+  function openEdit(field: "username") {
     setEditField(field);
     setEditValue(profile[field]);
   }
 
   const displayName = profile.username || email?.split("@")[0] || "User";
+
   const memberSince = session?.user?.created_at
     ? new Date(session.user.created_at).toLocaleDateString("en-US", {
         month: "long",
@@ -308,16 +314,15 @@ export default function AccountScreen() {
       label: "Email Address",
       value: email || "",
     },
-    {
-      icon: "language",
-      iconBg: "#10B981",
-      label: "Website",
-      value: profile.website || "Not set",
-      onPress: () => openEdit("website"),
-    },
   ];
 
-  const accountRows: InfoRow[] = [
+  const planRows: InfoRow[] = [
+    {
+      icon: "star",
+      iconBg: profile.is_pro ? "#F59E0B" : "#71717A",
+      label: "Plan",
+      value: profile.is_pro ? "Pro · Lifetime" : "Free",
+    },
     {
       icon: "calendar-today",
       iconBg: "#8B5CF6",
@@ -334,10 +339,19 @@ export default function AccountScreen() {
         <SectionTitle>Profile</SectionTitle>
         <AccountInfoCard rows={profileRows} />
 
-        <SectionTitle>Account</SectionTitle>
-        <AccountInfoCard rows={accountRows} />
+        <SectionTitle>Plan</SectionTitle>
+        <AccountInfoCard rows={planRows} />
+
+        {!profile.is_pro && (
+          <AccountActionButton
+            icon="star"
+            label="Get Pro"
+            onPress={() => setPaywallVisible(true)}
+          />
+        )}
 
         <SectionTitle>Actions</SectionTitle>
+
         <AccountActionButton
           icon="logout"
           label="Sign Out"
@@ -352,6 +366,7 @@ export default function AccountScreen() {
             })
           }
         />
+
         <AccountActionButton
           icon="delete-forever"
           label="Delete Account"
@@ -377,7 +392,13 @@ export default function AccountScreen() {
         <BottomSpacer />
       </ScrollView>
 
-      {/* Edit field modal */}
+      {/* Pro paywall */}
+      <Paywall
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
+      />
+
+      {/* Edit username modal */}
       <Modal
         visible={!!editField}
         transparent
@@ -386,15 +407,20 @@ export default function AccountScreen() {
       >
         <EditModal>
           <EditBox>
-            <EditTitle>Edit {editField}</EditTitle>
-            <Label>{editField}</Label>
+            <EditTitle>Edit Username</EditTitle>
+
+            <Label>Username</Label>
+
             <Input
               value={editValue}
               onChangeText={setEditValue}
-              placeholder={`Enter ${editField}`}
+              placeholder="Enter username"
               placeholderTextColor="#888"
               autoFocus
+              autoCapitalize="none"
+              autoCorrect={false}
             />
+
             <ButtonRow>
               <CancelButton
                 onPress={() => setEditField(null)}
@@ -402,6 +428,7 @@ export default function AccountScreen() {
               >
                 <CancelButtonText>Cancel</CancelButtonText>
               </CancelButton>
+
               <SaveButton
                 onPress={() => editField && updateProfile(editField, editValue)}
                 activeOpacity={0.7}
@@ -427,9 +454,12 @@ export default function AccountScreen() {
           onPress={() => setConfirmAction(null)}
           activeOpacity={1}
         />
+
         <ConfirmBox>
           <ConfirmTitle>{confirmAction?.title}</ConfirmTitle>
+
           <ConfirmMessage>{confirmAction?.message}</ConfirmMessage>
+
           <ConfirmButtonRow>
             <CancelButton
               onPress={() => setConfirmAction(null)}
@@ -437,6 +467,7 @@ export default function AccountScreen() {
             >
               <CancelButtonText>Cancel</CancelButtonText>
             </CancelButton>
+
             <DangerButton
               onPress={confirmAction?.onConfirm}
               activeOpacity={0.7}

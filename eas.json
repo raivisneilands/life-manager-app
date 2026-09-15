@@ -6,12 +6,18 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "SUPABASE_URL": "https://apmpmwgaysmcxyppiulf.supabase.co",
+        "SUPABASE_ANON_KEY": "sb_publishable_1a5lFmvFAR7qVGi5c8pNoA_eN2tNyrv",
+        "EXPO_PUBLIC_REVENUECAT_TEST_KEY": "test_tagKATKQVewqnApbsZIdkjHFMRM"
+      }
     },
     "preview": {
       "env": {
         "SUPABASE_URL": "https://apmpmwgaysmcxyppiulf.supabase.co",
-        "SUPABASE_ANON_KEY": "sb_publishable_1a5lFmvFAR7qVGi5c8pNoA_eN2tNyrv"
+        "SUPABASE_ANON_KEY": "sb_publishable_1a5lFmvFAR7qVGi5c8pNoA_eN2tNyrv",
+        "EXPO_PUBLIC_REVENUECAT_TEST_KEY": "test_tagKATKQVewqnApbsZIdkjHFMRM"
       },
       "distribution": "internal",
       "android": {
@@ -22,7 +28,8 @@
       "autoIncrement": true,
       "env": {
         "SUPABASE_URL": "https://apmpmwgaysmcxyppiulf.supabase.co",
-        "SUPABASE_ANON_KEY": "sb_publishable_1a5lFmvFAR7qVGi5c8pNoA_eN2tNyrv"
+        "SUPABASE_ANON_KEY": "sb_publishable_1a5lFmvFAR7qVGi5c8pNoA_eN2tNyrv",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_KEY": "goog_QfppGAqPBktyGnIQrlfvUDHTfDE"
       }
     }
   },

@@ -20,6 +20,7 @@ export default {
 
     android: {
       package: "com.lifemanager.lifemanagerproapp",
+      permissions: ["com.android.vending.BILLING"],
       adaptiveIcon: {
         backgroundColor: "#FFFFFF",
         foregroundImage: "./assets/icons/adaptive-icon.png",
@@ -49,6 +50,10 @@ export default {
           },
         },
       ],
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser",
     ],
 
     experiments: {

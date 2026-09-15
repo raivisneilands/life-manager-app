@@ -1,5 +1,7 @@
 import Container from "@/components/Container";
 import { InsightCard } from "@/components/InsightCard";
+import ProFeatureLock from "@/components/ProFeatureLock";
+import { useAuth } from "@/contexts/AuthContext";
 import { Goal, PlanStep } from "@/models/Goal";
 import { useGoalStore } from "@/store/GoalStore";
 import { generateGoalPlan } from "@/utils/ai";
@@ -502,20 +504,33 @@ function getProgress(goal: Goal): number {
         const done = goal.planSteps.filter((s) => s.completed).length;
         return (done / goal.planSteps.length) * 100;
       }
+
       return 0;
     }
 
     case "max": {
-      if (!goal.currentValue || !goal.targetValue) return 0;
+      if (
+        goal.currentValue == null ||
+        goal.targetValue == null ||
+        goal.targetValue <= 0
+      ) {
+        return 0;
+      }
+
       return Math.min(100, (goal.currentValue / goal.targetValue) * 100);
     }
 
     case "min": {
-      if (!goal.currentValue || !goal.targetValue) return 0;
-      return Math.min(
-        100,
-        ((goal.targetValue - goal.currentValue) / goal.targetValue) * 100,
-      );
+      if (
+        goal.currentValue == null ||
+        goal.targetValue == null ||
+        goal.currentValue <= 0 ||
+        goal.targetValue <= 0
+      ) {
+        return 0;
+      }
+
+      return Math.min(100, (goal.targetValue / goal.currentValue) * 100);
     }
   }
 }
@@ -542,6 +557,7 @@ export default function GoalsScreen() {
   const addPlanStep = useGoalStore((s) => s.addPlanStep);
   const removePlanStep = useGoalStore((s) => s.removePlanStep);
   const togglePlanStep = useGoalStore((s) => s.togglePlanStep);
+  const { isPro } = useAuth();
 
   const theme = useTheme();
 
@@ -591,6 +607,10 @@ export default function GoalsScreen() {
   }
 
   async function handleGeneratePlan(goal: Goal) {
+    if (!isPro) {
+      return;
+    }
+
     setPlanErrors((prev) => ({ ...prev, [goal.id]: null }));
     setGeneratingGoalId(goal.id);
 
@@ -719,6 +739,8 @@ export default function GoalsScreen() {
   return (
     <Container>
       <ScrollView showsVerticalScrollIndicator={false}>
+        <InsightCard screen="goals" />
+
         <Header>
           <HeaderText>
             <Title>Goals</Title>
@@ -732,8 +754,6 @@ export default function GoalsScreen() {
             <AddButtonText>New Goal</AddButtonText>
           </AddButton>
         </Header>
-
-        <InsightCard screen="goals" />
 
         <Section>
           <SectionTitle>Active Goals</SectionTitle>
@@ -814,35 +834,42 @@ export default function GoalsScreen() {
 
                     <PlanTitle>Plan</PlanTitle>
 
-                    <GenerateAIButton
-                      disabled={generatingGoalId === goal.id}
-                      onPress={() => handleGeneratePlan(goal)}
-                    >
-                      {generatingGoalId === goal.id ? (
-                        <>
-                          <ActivityIndicator
-                            size="small"
-                            color={theme.primary}
-                          />
-                          <GenerateAIButtonText>
-                            Generating...
-                          </GenerateAIButtonText>
-                        </>
-                      ) : (
-                        <>
-                          <MaterialIcons
-                            name="auto-awesome"
-                            size={18}
-                            color={theme.primary}
-                          />
-                          <GenerateAIButtonText>
-                            {goal.planSteps.length === 0
-                              ? "Generate with AI"
-                              : "Regenerate Plan"}
-                          </GenerateAIButtonText>
-                        </>
-                      )}
-                    </GenerateAIButton>
+                    {isPro ? (
+                      <GenerateAIButton
+                        disabled={generatingGoalId === goal.id}
+                        onPress={() => handleGeneratePlan(goal)}
+                      >
+                        {generatingGoalId === goal.id ? (
+                          <>
+                            <ActivityIndicator
+                              size="small"
+                              color={theme.primary}
+                            />
+                            <GenerateAIButtonText>
+                              Generating...
+                            </GenerateAIButtonText>
+                          </>
+                        ) : (
+                          <>
+                            <MaterialIcons
+                              name="auto-awesome"
+                              size={18}
+                              color={theme.primary}
+                            />
+                            <GenerateAIButtonText>
+                              {goal.planSteps.length === 0
+                                ? "Generate with AI"
+                                : "Regenerate Plan"}
+                            </GenerateAIButtonText>
+                          </>
+                        )}
+                      </GenerateAIButton>
+                    ) : (
+                      <ProFeatureLock
+                        title="AI Goal Plans"
+                        description="Let AI turn your goal into a practical step-by-step plan."
+                      />
+                    )}
 
                     {planErrors[goal.id] && (
                       <ErrorText>{planErrors[goal.id]}</ErrorText>

@@ -4,11 +4,17 @@ import { ActivityIndicator, Text, View } from "react-native";
 
 export default function AuthCallback() {
   useEffect(() => {
+    console.log(" === AUTH CALLBACK MOUNTED === ");
     const timer = setTimeout(() => {
-      router.replace("/");
-    }, 2000);
+      console.log(" === AUTH CALLBACK REDIRECTING TO ACCOUNT === ");
 
-    return () => clearTimeout(timer);
+      router.replace("/account");
+    }, 3000);
+
+    return () => {
+      console.log(" === AUTH CALLBACK UNMOUNTED === ");
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -32,7 +38,7 @@ export default function AuthCallback() {
           color: "#22C55E",
           fontSize: 22,
           fontWeight: "700",
-          marginBottom: 12,
+          margin: 12,
           textAlign: "center",
         }}
       >
@@ -47,7 +53,10 @@ export default function AuthCallback() {
           lineHeight: 24,
         }}
       >
-        Your account is now active. Redirecting you to sign in...
+        Your email address has been verified.
+        {"\n"}
+        {"\n"}
+        You can now sign in to your life manager account.
       </Text>
     </View>
   );

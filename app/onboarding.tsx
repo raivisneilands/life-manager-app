@@ -2,24 +2,17 @@ import { OnboardingContext } from "@/app/_layout";
 import styled from "@emotion/native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useContext, useRef, useState } from "react";
-import {
-  Dimensions,
-  FlatList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from "react-native";
+import { FlatList, ViewToken, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
-type Slide = {
+type SlideItem = {
   icon: keyof typeof MaterialIcons.glyphMap;
   iconBg: string;
   title: string;
   description: string;
 };
 
-const SLIDES: Slide[] = [
+const SLIDES: SlideItem[] = [
   {
     icon: "dashboard",
     iconBg: "#6366F1",
@@ -73,11 +66,14 @@ const SkipText = styled.Text(({ theme }) => ({
   fontWeight: "600",
 }));
 
-const Slide = styled.View(() => ({
-  width: SCREEN_WIDTH,
+// NOTE: width now comes from useWindowDimensions() inside the component
+// and is applied as an inline style, since a static SCREEN_WIDTH captured
+// at module-load time can be 0/incorrect in release builds.
+const SlideContainer = styled.View(() => ({
   alignItems: "center",
   justifyContent: "center",
   paddingHorizontal: 32,
+  paddingVertical: 32,
 }));
 
 const IconCircle = styled.View<{ bg: string }>(({ bg }) => ({
@@ -141,21 +137,45 @@ const PrimaryButtonText = styled.Text(() => ({
 export default function OnboardingScreen() {
   const { completeOnboarding } = useContext(OnboardingContext);
   const [activeIndex, setActiveIndex] = useState(0);
-  const listRef = useRef<FlatList<Slide>>(null);
+  const listRef = useRef<FlatList<SlideItem>>(null);
+
+  // Reactive — recalculates on layout/orientation changes and is
+  // guaranteed to be correct once the native window is ready,
+  // unlike Dimensions.get("window") called at module scope.
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
 
   const isLastSlide = activeIndex === SLIDES.length - 1;
 
-  function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-    setActiveIndex(index);
-  }
+  // Source of truth for the current page. onViewableItemsChanged fires
+  // reliably for BOTH user swipes and programmatic scrollToIndex calls,
+  // unlike onMomentumScrollEnd/onScrollEndDrag, which can silently fail
+  // to fire for programmatic scrolls (this is why Next used to get
+  // "stuck" and the dots stopped updating — activeIndex was never
+  // actually changing).
+  //
+  // The callback and config refs must stay referentially stable across
+  // renders or FlatList will throw/warn.
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      const first = viewableItems[0];
+      if (first?.index != null) {
+        setActiveIndex(first.index);
+      }
+    },
+  ).current;
 
-  function handleNext() {
+  async function handleNext() {
     if (isLastSlide) {
-      completeOnboarding();
+      await completeOnboarding();
       return;
     }
-    listRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true });
+    const nextIndex = activeIndex + 1;
+    // Update state immediately so the button and dots are correct right
+    // away; onViewableItemsChanged will also confirm/correct it once the
+    // scroll settles.
+    setActiveIndex(nextIndex);
+    listRef.current?.scrollToIndex({ index: nextIndex, animated: true });
   }
 
   return (
@@ -173,7 +193,8 @@ export default function OnboardingScreen() {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         style={{ flex: 1 }}
         getItemLayout={(_, index) => ({
           length: SCREEN_WIDTH,
@@ -181,13 +202,13 @@ export default function OnboardingScreen() {
           index,
         })}
         renderItem={({ item }) => (
-          <Slide>
+          <SlideContainer style={{ width: SCREEN_WIDTH }}>
             <IconCircle bg={item.iconBg}>
               <MaterialIcons name={item.icon} size={40} color="#fff" />
             </IconCircle>
             <SlideTitle>{item.title}</SlideTitle>
             <SlideDescription>{item.description}</SlideDescription>
-          </Slide>
+          </SlideContainer>
         )}
       />
 

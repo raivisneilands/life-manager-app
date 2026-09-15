@@ -182,9 +182,9 @@ export default function FitnessScreen() {
   return (
     <Container>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <FitnessHeader onAdd={() => openSheet()} />
-
         <InsightCard screen="fitness" />
+
+        <FitnessHeader onAdd={() => openSheet()} />
 
         <Section>
           <SectionTitle>This Week</SectionTitle>

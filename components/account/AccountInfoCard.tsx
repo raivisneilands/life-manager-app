@@ -1,5 +1,6 @@
 import styled from "@emotion/native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { Fragment } from "react/jsx-runtime";
 
 const Card = styled.View(({ theme }) => ({
   backgroundColor: theme.card,
@@ -65,7 +66,7 @@ export default function AccountInfoCard({ rows }: Props) {
   return (
     <Card>
       {rows.map((row, index) => (
-        <>
+        <Fragment key={row.label}>
           {index > 0 && <RowDivider key={`divider-${index}`} />}
           <Row
             key={row.label}
@@ -83,7 +84,7 @@ export default function AccountInfoCard({ rows }: Props) {
               <MaterialIcons name="chevron-right" size={20} color="#888" />
             )}
           </Row>
-        </>
+        </Fragment>
       ))}
     </Card>
   );

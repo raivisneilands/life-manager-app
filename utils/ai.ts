@@ -18,19 +18,20 @@ export type InsightScreen =
 
 // ─── Cache helpers ─────────────────────────────────────────────────────────────
 
-const todayKey = (screen: InsightScreen) => {
+const todayKey = (screen: InsightScreen, userId: string) => {
   const d = new Date();
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
-  return `ai_insight_${screen}_${yyyy}-${mm}-${dd}`;
+  return `ai_insight_${userId}_${screen}_${yyyy}-${mm}-${dd}`;
 };
 
 export async function getCachedInsight(
-  screen: InsightScreen
+  screen: InsightScreen,
+  userId: string
 ): Promise<string | null> {
   try {
-    return await AsyncStorage.getItem(todayKey(screen));
+    return await AsyncStorage.getItem(todayKey(screen, userId));
   } catch {
     return null;
   }
@@ -38,10 +39,11 @@ export async function getCachedInsight(
 
 export async function setCachedInsight(
   screen: InsightScreen,
+  userId: string,
   insight: string
 ): Promise<void> {
   try {
-    await AsyncStorage.setItem(todayKey(screen), insight);
+    await AsyncStorage.setItem(todayKey(screen, userId), insight);
   } catch {
     // silently fail — cache is best-effort
   }
@@ -285,15 +287,15 @@ export function buildTodayContext(stores: {
 export async function fetchInsight(
   screen: InsightScreen,
   context: string,
-  opts: { force?: boolean; userJwt: string }
+  opts: { force?: boolean; userJwt: string; userId: string; }
 ): Promise<string> {
   if (!opts.force) {
-    const cached = await getCachedInsight(screen);
+    const cached = await getCachedInsight(screen, opts.userId);
     if (cached) return cached;
   }
 
   const insight = await callEdgeFunction(screen, context, opts.userJwt);
-  await setCachedInsight(screen, insight);
+  await setCachedInsight(screen, opts.userId, insight);
   return insight;
 }
 

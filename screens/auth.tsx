@@ -166,6 +166,41 @@ const StatusText = styled.Text(
   }),
 );
 
+const ConfirmationActions = styled.View(() => ({
+  marginTop: 12,
+  gap: 10,
+}));
+
+const ConfirmationText = styled.Text(({ theme }) => ({
+  color: theme.textSecondary,
+  fontSize: 13,
+  lineHeight: 19,
+  marginTop: 4,
+}));
+
+const ConfirmationEmail = styled.Text(({ theme }) => ({
+  color: theme.textPrimary,
+  fontWeight: "700",
+}));
+
+const SecondaryButton = styled.TouchableOpacity(
+  ({ theme, disabled }: { theme?: any; disabled?: boolean }) => ({
+    borderWidth: 1,
+    borderColor: disabled ? theme.border : theme.primary,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  }),
+);
+
+const SecondaryButtonText = styled.Text(
+  ({ theme, disabled }: { theme?: any; disabled?: boolean }) => ({
+    color: disabled ? theme.textSecondary : theme.primary,
+    fontSize: 14,
+    fontWeight: "700",
+  }),
+);
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Mode = "login" | "signup";
@@ -182,60 +217,125 @@ export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
+
   const [status, setStatus] = useState<StatusMessage>(null);
 
-  const redirectTo = Platform.select({
-    ios: "lifemanagerapp://auth/callback",
-    android: "lifemanagerapp://auth/callback",
-    web: "https://auth-callback-web.vercel.app/",
-  });
+  const [confirmationSent, setConfirmationSent] = useState(false);
+
+  const redirectTo = "https://auth-callback-web.vercel.app/";
+
+  // ─── Sign In ───────────────────────────────────────────────────────────────
 
   async function signInWithEmail() {
     setLoading(true);
     setStatus(null);
+
+    const trimmedEmail = email.trim();
+
     const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
+      email: trimmedEmail,
+      password,
     });
+
     if (error) {
       if (error.message.toLowerCase().includes("email not confirmed")) {
         setStatus({
           type: "info",
-          text: `Please confirm your email address first. Check your inbox at ${email}.`,
+          text: `Please confirm your email address first. Check your inbox or spam folder at ${trimmedEmail}.`,
         });
       } else {
-        setStatus({ type: "error", text: error.message });
+        setStatus({
+          type: "error",
+          text: error.message,
+        });
       }
     }
+
     setLoading(false);
   }
+
+  // ─── Sign Up ───────────────────────────────────────────────────────────────
 
   async function signUpWithEmail() {
     setLoading(true);
     setStatus(null);
+    setConfirmationSent(false);
+
+    const trimmedEmail = email.trim();
+
     const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
+      email: trimmedEmail,
+      password,
       options: {
         emailRedirectTo: redirectTo,
       },
     });
 
     if (error) {
-      setStatus({ type: "error", text: error.message });
-    } else if (data.session === null) {
-      setMode("login");
-      setPassword("");
       setStatus({
-        type: "info",
-        text: `Confirmation email sent to ${email}. Please verify your email before signing in.`,
+        type: "error",
+        text: error.message,
       });
+    } else if (data.session === null) {
+      setPassword("");
+      setConfirmationSent(true);
     } else {
-      setStatus({ type: "success", text: "Account created successfully!" });
+      setStatus({
+        type: "success",
+        text: "Account created successfully!",
+      });
     }
+
     setLoading(false);
   }
+
+  // ─── Resend Confirmation ──────────────────────────────────────────────────
+
+  async function resendConfirmationEmail() {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      return;
+    }
+
+    setResendingConfirmation(true);
+    setStatus(null);
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: trimmedEmail,
+      options: {
+        emailRedirectTo: redirectTo,
+      },
+    });
+
+    if (error) {
+      setStatus({
+        type: "error",
+        text: error.message,
+      });
+    } else {
+      setStatus({
+        type: "success",
+        text: "If a confirmation email is available, we've sent another one. Please check your inbox and spam folder.",
+      });
+    }
+
+    setResendingConfirmation(false);
+  }
+
+  // ─── Switch to Login ───────────────────────────────────────────────────────
+
+  function switchToLogin() {
+    setMode("login");
+    setConfirmationSent(false);
+    setStatus(null);
+  }
+
+  // ─── Submit ────────────────────────────────────────────────────────────────
 
   function handleSubmit() {
     if (mode === "login") {
@@ -244,6 +344,8 @@ export default function AuthScreen() {
       signUpWithEmail();
     }
   }
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <Container>
@@ -260,7 +362,9 @@ export default function AuthScreen() {
               <LogoCircle>
                 <MaterialIcons name="self-improvement" size={36} color="#fff" />
               </LogoCircle>
+
               <AppName>Life Manager</AppName>
+
               <AppTagline>Your life, organised.</AppTagline>
             </LogoArea>
 
@@ -270,16 +374,19 @@ export default function AuthScreen() {
                 onPress={() => {
                   setMode("login");
                   setStatus(null);
+                  setConfirmationSent(false);
                 }}
                 activeOpacity={0.8}
               >
                 <ToggleText active={mode === "login"}>Log In</ToggleText>
               </ToggleButton>
+
               <ToggleButton
                 active={mode === "signup"}
                 onPress={() => {
                   setMode("signup");
                   setStatus(null);
+                  setConfirmationSent(false);
                 }}
                 activeOpacity={0.8}
               >
@@ -306,11 +413,50 @@ export default function AuthScreen() {
                         : "#6366F1"
                   }
                 />
+
                 <StatusText type={status.type}>{status.text}</StatusText>
               </StatusBanner>
             )}
 
+            {confirmationSent && mode === "signup" && (
+              <ConfirmationActions>
+                <ConfirmationText>
+                  If a confirmation email can be sent for this address, you'll
+                  receive one shortly. Please check your inbox and spam or junk
+                  folder.
+                </ConfirmationText>
+
+                <ConfirmationText>
+                  Confirmation email for{" "}
+                  <ConfirmationEmail>{email.trim()}</ConfirmationEmail>
+                </ConfirmationText>
+
+                <SecondaryButton
+                  onPress={resendConfirmationEmail}
+                  disabled={resendingConfirmation}
+                  activeOpacity={0.8}
+                >
+                  <SecondaryButtonText disabled={resendingConfirmation}>
+                    {resendingConfirmation
+                      ? "Sending..."
+                      : "Resend confirmation email"}
+                  </SecondaryButtonText>
+                </SecondaryButton>
+
+                <SecondaryButton
+                  onPress={switchToLogin}
+                  disabled={resendingConfirmation}
+                  activeOpacity={0.8}
+                >
+                  <SecondaryButtonText disabled={resendingConfirmation}>
+                    Log In instead
+                  </SecondaryButtonText>
+                </SecondaryButton>
+              </ConfirmationActions>
+            )}
+
             <Label>Email</Label>
+
             <InputRow>
               <Input
                 placeholder="email@address.com"
@@ -324,6 +470,7 @@ export default function AuthScreen() {
             </InputRow>
 
             <Label>Password</Label>
+
             <InputRow>
               <Input
                 placeholder="••••••••"
@@ -333,6 +480,7 @@ export default function AuthScreen() {
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
               />
+
               <TouchableOpacity
                 onPress={() => setShowPassword((v) => !v)}
                 activeOpacity={0.7}
@@ -345,19 +493,21 @@ export default function AuthScreen() {
               </TouchableOpacity>
             </InputRow>
 
-            <SubmitButton
-              onPress={handleSubmit}
-              activeOpacity={0.8}
-              disabled={loading}
-            >
-              <SubmitButtonText disabled={loading}>
-                {loading
-                  ? "Loading..."
-                  : mode === "login"
-                    ? "Sign In"
-                    : "Sign Up"}
-              </SubmitButtonText>
-            </SubmitButton>
+            {!confirmationSent && (
+              <SubmitButton
+                onPress={handleSubmit}
+                activeOpacity={0.8}
+                disabled={loading}
+              >
+                <SubmitButtonText disabled={loading}>
+                  {loading
+                    ? "Loading..."
+                    : mode === "login"
+                      ? "Sign In"
+                      : "Sign Up"}
+                </SubmitButtonText>
+              </SubmitButton>
+            )}
           </Inner>
         </ScrollView>
       </KeyboardAvoidingView>
